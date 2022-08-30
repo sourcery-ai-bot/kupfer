@@ -15,8 +15,8 @@ def launch_argv_with_fallbacks(commands, print_error=True):
 	return False if no command is successful and log an error
 	"""
 	for argv in commands:
-		ret = utils.spawn_async(argv)
-		if ret: return ret
+		if ret := utils.spawn_async(argv):
+			return ret
 	pretty.print_error(__name__, "Unable to run command(s)", commands)
 	return False
 

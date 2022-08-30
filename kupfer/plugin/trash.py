@@ -28,10 +28,10 @@ class RestoreTrashedFile (Action):
 		orig_gfile = gio.File(orig_path)
 		cur_gfile = leaf.get_gfile()
 		if orig_gfile.query_exists():
-			raise IOError("Target file exists at %s" % orig_gfile.get_path())
-		pretty.print_debug(__name__, "Move %s to %s" % (cur_gfile, orig_gfile))
+			raise IOError(f"Target file exists at {orig_gfile.get_path()}")
+		pretty.print_debug(__name__, f"Move {cur_gfile} to {orig_gfile}")
 		ret = cur_gfile.move(orig_gfile)
-		pretty.print_debug(__name__, "Move ret=%s" % (ret, ))
+		pretty.print_debug(__name__, f"Move ret={ret}")
 		return FileLeaf(orig_gfile.get_path())
 
 	def get_description(self):
@@ -49,12 +49,10 @@ class TrashFile (Leaf):
 		if self.get_orig_path():
 			yield RestoreTrashedFile()
 	def get_gfile(self):
-		cur_gfile = gio.File(self._trash_uri).get_child(self.object.get_name())
-		return cur_gfile
+		return gio.File(self._trash_uri).get_child(self.object.get_name())
 	def get_orig_path(self):
 		try:
-			orig_path = self.object.get_attribute_byte_string("trash::orig-path")
-			return orig_path
+			return self.object.get_attribute_byte_string("trash::orig-path")
 		except AttributeError:
 			pass
 		return None
@@ -128,11 +126,14 @@ class Trash (SpecialLocation):
 
 	def get_description(self):
 		item_count = self.get_item_count()
-		if not item_count:
-			return _("Trash is empty")
-		# proper translation of plural
-		return ngettext("Trash contains one file",
-			"Trash contains %(num)s files", item_count) % {"num": item_count}
+		return (
+			ngettext(
+				"Trash contains one file", "Trash contains %(num)s files", item_count
+			)
+			% {"num": item_count}
+			if item_count
+			else _("Trash is empty")
+		)
 
 class InvisibleSourceLeaf (SourceLeaf):
 	"""Hack to hide this source"""

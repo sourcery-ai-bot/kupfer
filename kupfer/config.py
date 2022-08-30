@@ -11,7 +11,7 @@ class ResourceLookupError (StandardError):
 	pass
 
 def has_capability(cap):
-	return not bool(os.getenv("KUPFER_NO_%s" % cap, False))
+	return not bool(os.getenv(f"KUPFER_NO_{cap}", False))
 
 def get_cache_home():
 	"""
@@ -31,16 +31,13 @@ def get_cache_home():
 def get_cache_file(path=()):
 	cache_home = base.xdg_cache_home or os.path.expanduser("~/.cache")
 	cache_dir = os.path.join(cache_home, *path)
-	if not os.path.exists(cache_dir):
-		return None
-	return cache_dir
+	return cache_dir if os.path.exists(cache_dir) else None
 
 def get_data_file(filename, package=PACKAGE_NAME):
 	"""
 	Return path to @filename if it exists
 	anywhere in the data paths, else raise ResourceLookupError.
 	"""
-	data_paths = []
 	try:
 		from . import version_subst
 	except ImportError:
@@ -48,9 +45,9 @@ def get_data_file(filename, package=PACKAGE_NAME):
 	else:
 		first_datadir = os.path.join(version_subst.DATADIR, package)
 
-	data_paths.append(first_datadir)
+	data_paths = [first_datadir]
 	for data_path in base.load_data_paths(package):
-		if not data_path in data_paths:
+		if data_path not in data_paths:
 			data_paths.append(data_path)
 
 	for direc in data_paths:
@@ -58,10 +55,11 @@ def get_data_file(filename, package=PACKAGE_NAME):
 		if os.path.exists(file_path):
 			return file_path
 	if package == PACKAGE_NAME:
-		raise ResourceLookupError("Resource %s not found" % filename)
+		raise ResourceLookupError(f"Resource {filename} not found")
 	else:
-		raise ResourceLookupError("Resource %s in package %s not found" %
-			(filename, package))
+		raise ResourceLookupError(
+			f"Resource {filename} in package {package} not found"
+		)
 
 def save_data_file(filename):
 	"""
@@ -69,10 +67,7 @@ def save_data_file(filename):
 	directory is guaranteed to exist
 	"""
 	direc = base.save_data_path(PACKAGE_NAME)
-	if not direc:
-		return None
-	filepath = os.path.join(direc, filename)
-	return filepath
+	return os.path.join(direc, filename) if direc else None
 
 def get_data_home():
 	"""
@@ -108,7 +103,4 @@ def save_config_file(filename):
 	directory is guaranteed to exist
 	"""
 	direc = base.save_config_path(PACKAGE_NAME)
-	if not direc:
-		return None
-	filepath = os.path.join(direc, filename)
-	return filepath
+	return os.path.join(direc, filename) if direc else None

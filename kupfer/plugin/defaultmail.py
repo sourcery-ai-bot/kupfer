@@ -19,11 +19,11 @@ class NewMailAction(Action):
 
 	def activate(self, leaf):
 		email = email_from_leaf(leaf)
-		utils.show_url("mailto:%s" % email)
+		utils.show_url(f"mailto:{email}")
 
 	def activate_multiple(self, objects):
 		recipients = ",".join(email_from_leaf(L) for L in objects)
-		url = "mailto:" + recipients
+		url = f"mailto:{recipients}"
 		utils.show_url(url)
 
 	def item_types(self):
@@ -49,7 +49,7 @@ class SendFileByMail (Action):
 		# FIXME: revisit for unicode email addresses
 		recipients = ",".join(email_from_leaf(I) for I in iobjects)
 		attachlist = "?attach=" + "&attach=".join(L.object for L in objects)
-		url = "mailto:" + recipients + attachlist
+		url = f"mailto:{recipients}{attachlist}"
 		utils.show_url(url)
 
 	def item_types(self):

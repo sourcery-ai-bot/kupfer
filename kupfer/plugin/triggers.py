@@ -28,8 +28,7 @@ import keybinder
 
 class Trigger (RunnableLeaf):
 	def get_actions(self):
-		for act in RunnableLeaf.get_actions(self):
-			yield act
+		yield from RunnableLeaf.get_actions(self)
 		yield RemoveTrigger()
 	def run(self):
 		return Triggers.perform_trigger(self.object)
@@ -70,7 +69,7 @@ class Triggers (Source):
 	def get_items(self):
 		for target, (keystr, name, id_) in self.trigger_table.iteritems():
 			label = gtk.accelerator_get_label(*gtk.accelerator_parse(keystr))
-			yield Trigger(target, u"%s (%s)" % (label or keystr, name))
+			yield Trigger(target, f"{label or keystr} ({name})")
 
 	def should_sort_lexically(self):
 		return True
@@ -133,8 +132,7 @@ class BindTask (task.Task):
 		glib.idle_add(self.ask_key, finish_callback)
 
 	def ask_key(self, finish_callback):
-		keystr = getkey_dialog.ask_for_key(try_bind_key)
-		if keystr:
+		if keystr := getkey_dialog.ask_for_key(try_bind_key):
 			Triggers.add_trigger(self.leaf, keystr)
 		finish_callback(self)
 

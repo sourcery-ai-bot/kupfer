@@ -19,7 +19,7 @@ class SelectedText (TextLeaf):
 		summary = lines[0] if lines else text
 		maxlen = 10
 		if len(summary) > maxlen:
-			summary = summary[:maxlen] + u".."
+			summary = f"{summary[:maxlen]}.."
 		TextLeaf.__init__(self, text, _('Selected Text "%s"') % summary)
 
 	def repr_key(self):

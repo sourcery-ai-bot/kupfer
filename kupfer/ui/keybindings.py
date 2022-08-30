@@ -93,6 +93,4 @@ def _is_sane_keybinding(keystr):
 		return True
 	if len(keystr) == 1 and keystr.isalnum():
 		return False
-	if keystr in set(["Return", "space", "BackSpace", "Escape"]):
-		return False
-	return True
+	return keystr not in {"Return", "space", "BackSpace", "Escape"}

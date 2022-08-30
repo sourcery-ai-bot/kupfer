@@ -44,7 +44,7 @@ class FakePlugin (object):
 		self.__name__ = plugin_id
 		vars(self).update(attributes)
 	def __repr__(self):
-		return "<%s %s>" % (type(self).__name__, self.__name__)
+		return f"<{type(self).__name__} {self.__name__}>"
 
 def get_plugin_info():
 	"""Generator, yields dictionaries of plugin descriptions
@@ -95,12 +95,10 @@ def get_plugin_desc():
 		# Wrap the description and align continued lines
 		wrapped = textwrap.wrap(rec["description"], maxlen - left_margin)
 		description = (u"\n" + u" "*left_margin).join(wrapped)
-		desc.append("  %s %s %s" %
-			(
-				rec["name"].ljust(idlen),
-				rec["version"].ljust(verlen),
-				description,
-			))
+		desc.append(
+			f'  {rec["name"].ljust(idlen)} {rec["version"].ljust(verlen)} {description}'
+		)
+
 	return "\n".join(desc)
 
 _imported_plugins = {}
@@ -304,7 +302,7 @@ def get_plugin_attributes(plugin_name, attrs, warn=False):
 def get_plugin_attribute(plugin_name, attr):
 	"""Get single plugin attribute"""
 	attrs = tuple(get_plugin_attributes(plugin_name, (attr,)))
-	obj, = (attrs if attrs else (None, ))
+	obj, = attrs or (None, )
 	return obj
 
 def load_plugin_sources(plugin_name, attr=sources_attribute, instantiate=True):
@@ -318,7 +316,7 @@ def load_plugin_sources(plugin_name, attr=sources_attribute, instantiate=True):
 			else:
 				yield source
 		else:
-			pretty.print_info(__name__, "Source not found for %s" % plugin_name)
+			pretty.print_info(__name__, f"Source not found for {plugin_name}")
 
 
 # Plugin Initialization & Error
@@ -330,7 +328,7 @@ def _loader_hook(modpath):
 	modname = ".".join(modpath)
 	loader = pkgutil.find_loader(modname)
 	if not loader:
-		raise ImportError("No loader found for %s" % modname)
+		raise ImportError(f"No loader found for {modname}")
 	if not loader.is_package(modname):
 		raise ImportError("Is not a package")
 	return loader
@@ -369,11 +367,9 @@ def initialize_plugin(plugin_name):
 	Find settings attribute if defined, and initialize it
 	"""
 	_load_icons(plugin_name)
-	settings_dict = get_plugin_attribute(plugin_name, settings_attribute)
-	if settings_dict:
+	if settings_dict := get_plugin_attribute(plugin_name, settings_attribute):
 		settings_dict.initialize(plugin_name)
-	initialize = get_plugin_attribute(plugin_name, initialize_attribute)
-	if initialize:
+	if initialize := get_plugin_attribute(plugin_name, initialize_attribute):
 		initialize(plugin_name)
 
 def unimport_plugin(plugin_name):
@@ -394,13 +390,13 @@ def unimport_plugin(plugin_name):
 	if plugin_module_name in sys.modules:
 		sys.modules.pop(plugin_module_name)
 	for mod in list(sys.modules):
-		if mod.startswith(plugin_module_name + "."):
+		if mod.startswith(f"{plugin_module_name}."):
 			pretty.print_debug(__name__, "Dereferencing module", mod)
 			sys.modules.pop(mod)
 
 def register_plugin_unimport_hook(plugin_name, callback, *args):
 	if plugin_name not in _imported_plugins:
-		raise ValueError("No such plugin %s" % plugin_name)
+		raise ValueError(f"No such plugin {plugin_name}")
 	_plugin_hooks.setdefault(plugin_name, []).append((callback, args))
 
 def get_plugin_error(plugin_name):

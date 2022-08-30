@@ -39,9 +39,7 @@ _STATUSES = {
 
 
 def _parse_response(response, prefix):
-	if response.startswith(prefix):
-		return response[len(prefix):].strip()
-	return None
+	return response[len(prefix):].strip() if response.startswith(prefix) else None
 
 
 class _SkypeNotify(dbus.service.Object):
@@ -133,16 +131,16 @@ class Skype(object):
 			return
 		users =  skype.Invoke("SEARCH FRIENDS")
 		if not users.startswith('USERS '):
-			return 
+			return
 		users = users[6:].split(',')
 		for user in users:
 			user = user.strip()
-			fullname = skype.Invoke('GET USER %s FULLNAME' % user)
-			fullname = _parse_response(fullname, 'USER %s FULLNAME' % user)
-			displayname = skype.Invoke('GET USER %s DISPLAYNAME' % user)
-			displayname = _parse_response(displayname, 'USER %s DISPLAYNAME' % user)
-			status = skype.Invoke('GET USER %s ONLINESTATUS' % user)
-			status = _parse_response(status, 'USER %s ONLINESTATUS' % user)
+			fullname = skype.Invoke(f'GET USER {user} FULLNAME')
+			fullname = _parse_response(fullname, f'USER {user} FULLNAME')
+			displayname = skype.Invoke(f'GET USER {user} DISPLAYNAME')
+			displayname = _parse_response(displayname, f'USER {user} DISPLAYNAME')
+			status = skype.Invoke(f'GET USER {user} ONLINESTATUS')
+			status = _parse_response(status, f'USER {user} ONLINESTATUS')
 			contact = Contact((displayname or fullname or user), user, status)
 			self._friends.append(contact)
 
@@ -156,20 +154,18 @@ class Skype(object):
 		skype = self._get_skype(self.bus)
 		if not skype:
 			return
-		resp = skype.Invoke("CHAT CREATE %s" % handle)
+		resp = skype.Invoke(f"CHAT CREATE {handle}")
 		if resp.startswith('CHAT '):
 			_chat, chat_id, _status, status = resp.split()
-			skype.Invoke('OPEN CHAT %s' % chat_id)
+			skype.Invoke(f'OPEN CHAT {chat_id}')
 
 	def call(self, handle):
-		skype = self._get_skype(self.bus)
-		if skype:
-			skype.Invoke("CALL %s" % handle)
+		if skype := self._get_skype(self.bus):
+			skype.Invoke(f"CALL {handle}")
 
 	def set_status(self, status):
-		skype = self._get_skype(self.bus)
-		if skype:
-			skype.Invoke("SET USERSTATUS %s" % status)
+		if skype := self._get_skype(self.bus):
+			skype.Invoke(f"SET USERSTATUS {status}")
 
 
 class Contact(ContactLeaf):
@@ -204,8 +200,7 @@ class Chat(Action):
 		Action.__init__(self, _("Open Chat"))
 
 	def activate(self, leaf):
-		handle = SKYPE_KEY in leaf and leaf[SKYPE_KEY]
-		if handle:
+		if handle := SKYPE_KEY in leaf and leaf[SKYPE_KEY]:
 			Skype.get().open_chat(handle)
 
 	def item_types(self):
@@ -225,8 +220,7 @@ class Call(Action):
 		Action.__init__(self, _("Call"))
 
 	def activate(self, leaf):
-		handle = SKYPE_KEY in leaf and leaf[SKYPE_KEY]
-		if handle:
+		if handle := SKYPE_KEY in leaf and leaf[SKYPE_KEY]:
 			Skype.get().call(handle)
 
 	def item_types(self):

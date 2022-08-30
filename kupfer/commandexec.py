@@ -76,11 +76,11 @@ def activate_action(obj, action, iobj):
 		return _activate_action_multiple(obj, action, iobj)
 
 def _activate_action_single(obj, action, iobj):
-	if action.requires_object():
-		ret = action.activate(obj, iobj)
-	else:
-		ret = action.activate(obj)
-	return ret
+	return (
+		action.activate(obj, iobj)
+		if action.requires_object()
+		else action.activate(obj)
+	)
 
 def _activate_action_multiple(obj, action, iobj):
 	if not hasattr(action, "activate_multiple"):
@@ -88,11 +88,11 @@ def _activate_action_multiple(obj, action, iobj):
 		return _activate_action_multiple_multiplied(_get_leaf_members(obj),
 				action, iobjs)
 
-	if action.requires_object():
-		ret = action.activate_multiple(_get_leaf_members(obj), _get_leaf_members(iobj))
-	else:
-		ret = action.activate_multiple(_get_leaf_members(obj))
-	return ret
+	return (
+		action.activate_multiple(_get_leaf_members(obj), _get_leaf_members(iobj))
+		if action.requires_object()
+		else action.activate_multiple(_get_leaf_members(obj))
+	)
 
 def _activate_action_multiple_multiplied(objs, action, iobjs):
 	"""
@@ -209,11 +209,10 @@ class ActionExecutionContext (gobject.GObject, pretty.OutputMixin):
 		self.output_debug("Late result", repr(result), "for", token)
 		command_id, (_ign1, action, _ign2) = token
 		if result is None:
-			raise ActionExecutionError("Late result from %s was None" % action)
+			raise ActionExecutionError(f"Late result from {action} was None")
 		res_name = unicode(result)
-		res_desc = result.get_description()
-		if res_desc:
-			description = "%s (%s)" % (res_name, res_desc)
+		if res_desc := result.get_description():
+			description = f"{res_name} ({res_desc})"
 		else:
 			description = res_name
 		uiutils.show_notification(_('"%s" produced a result') % action,
@@ -244,7 +243,7 @@ class ActionExecutionContext (gobject.GObject, pretty.OutputMixin):
 		if not action or not obj:
 			raise ActionExecutionError("Primary Object and Action required")
 		if iobj is None and action.requires_object():
-			raise ActionExecutionError("%s requires indirect object" % action)
+			raise ActionExecutionError(f"{action} requires indirect object")
 
 		with self._error_conversion(obj, action, iobj):
 			with self._nesting():
@@ -282,8 +281,10 @@ class ActionExecutionContext (gobject.GObject, pretty.OutputMixin):
 
 
 	def _combine_action_result_multiple(self, action, retvals):
-		self.output_debug("Combining", repr(action), retvals,
-				"delegate=%s" % self._delegate)
+		self.output_debug(
+			"Combining", repr(action), retvals, f"delegate={self._delegate}"
+		)
+
 
 		def _make_retvalue(res, values):
 			"Construct a return value for type res"

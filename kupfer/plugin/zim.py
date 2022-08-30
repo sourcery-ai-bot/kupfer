@@ -122,7 +122,7 @@ class CreateZimSubPage(Action):
 		Action.__init__(self, _('Create Subpage...'))
 
 	def activate(self, leaf, iobj):
-		_start_zim(leaf.notebook, leaf.page + ":" + iobj.object.strip(':'))
+		_start_zim(leaf.notebook, f"{leaf.page}:" + iobj.object.strip(':'))
 
 	def get_icon_name(self):
 		return 'document-new'
@@ -147,7 +147,7 @@ def _read_zim_notebooks_old(zim_notebooks_file):
 	'''
 	# We assume the notebook description is UTF-8 encoded
 	with open(zim_notebooks_file, 'r') as notebooks_file:
-		for line in notebooks_file.readlines():
+		for line in notebooks_file:
 			if not line.startswith('_default_'):
 				notebook_name, notebook_path = line.strip().split('\t', 2)
 				notebook_name = notebook_name.decode("UTF-8", "replace")
@@ -162,18 +162,17 @@ def _get_default_notebook():
 		pretty.print_error(__name__, "Zim notebooks.list not found")
 		return None
 	with open(zim_notebooks_file, 'r') as notebooks_file:
-		for line in notebooks_file.readlines():
+		for line in notebooks_file:
 			if line.strip() == "[NotebookList]":
 				# new file format == pyzim
 				return ''
 			if line.strip() != '_default_': # when no default notebook
 				notebook_name, notebook_path = line.strip().split('\t', 2)
-				if notebook_name == '_default_':
-					# _default_ is pointing at name of the default notebook
-					return notebook_path.decode("UTF-8", "replace")
-				else:
-					# assume first notebook as default
-					return notebook_name.decode("UTF-8", "replace")
+				return (
+					notebook_path.decode("UTF-8", "replace")
+					if notebook_name == '_default_'
+					else notebook_name.decode("UTF-8", "replace")
+				)
 
 
 def _read_zim_notebook_name(notebook_path):
@@ -182,8 +181,7 @@ def _read_zim_notebook_name(notebook_path):
 		for line in notebook_file:
 			if line.startswith("name="):
 				_ignored, b_name = line.strip().split("=", 1)
-				us_name = b_name.decode("unicode_escape")
-				return us_name
+				return b_name.decode("unicode_escape")
 	return os.path.basename(notebook_path)
 
 def _read_zim_notebooks_new(zim_notebooks_file):
@@ -270,7 +268,7 @@ class ZimPagesSource(AppLeafContentMixin, Source):
 				for filename in files:
 					file_path = os.path.join(root, filename)
 					page_name, ext = os.path.splitext(file_path)
-					if not ext.lower() == ".txt":
+					if ext.lower() != ".txt":
 						continue
 					page_name = page_name.replace(notebook_path, "", 1)
 					# Ask GLib for the correct unicode representation

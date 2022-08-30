@@ -37,11 +37,11 @@ class MultiAppContentMixin (object):
 	"""
 	@classmethod
 	def __get_appleaf_id_iter(cls):
-		if hasattr(cls.appleaf_content_id, "__iter__"):
-			ids = iter(cls.appleaf_content_id)
-		else:
-			ids = (cls.appleaf_content_id, )
-		return ids
+		return (
+			iter(cls.appleaf_content_id)
+			if hasattr(cls.appleaf_content_id, "__iter__")
+			else (cls.appleaf_content_id,)
+		)
 
 	@classmethod
 	def decorates_type(cls):

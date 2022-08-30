@@ -31,7 +31,7 @@ class Rankable (object):
 		return (self.object == self.object)
 
 	def __str__(self):
-		return "%s: %s" % (self.rank, self.value)
+		return f"{self.rank}: {self.value}"
 
 	def __repr__(self):
 		return "<Rankable %s repres %s at %x>" % (str(self), repr(self.object), id(self))

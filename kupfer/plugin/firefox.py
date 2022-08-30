@@ -93,8 +93,7 @@ class BookmarksSource (AppLeafContentMixin, Source, FilesystemWatchMixin):
 		dirloc = firefox_support.get_firefox_home_file("bookmarkbackups")
 		fpath = None
 		if dirloc:
-			files = os.listdir(dirloc)
-			if files:
+			if files := os.listdir(dirloc):
 				latest_file = (files.sort() or files)[-1]
 				fpath = os.path.join(dirloc, latest_file)
 
@@ -108,8 +107,7 @@ class BookmarksSource (AppLeafContentMixin, Source, FilesystemWatchMixin):
 			else:
 				return itertools.chain(self._history, json_bookmarks)
 
-		fpath = firefox_support.get_firefox_home_file("bookmarks.html")
-		if fpath:
+		if fpath := firefox_support.get_firefox_home_file("bookmarks.html"):
 			html_bookmarks = self._get_ffx2_bookmarks(fpath)
 		else:
 			self.output_error("No firefox bookmarks file found")

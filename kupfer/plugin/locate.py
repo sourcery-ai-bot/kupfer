@@ -69,10 +69,8 @@ class LocateQuerySource (Source):
 			out, ignored_err = proc.communicate()
 			return (ConstructFileLeaf(f) for f in out.split("\x00")[offset:-1])
 
-		for F in get_locate_output(p1, 0):
-			yield F
-		for F in get_locate_output(p2, first_num):
-			yield F
+		yield from get_locate_output(p1, 0)
+		yield from get_locate_output(p2, first_num)
 
 	def get_gicon(self):
 		return icons.ComposedIcon("gnome-terminal", self.get_icon_name())

@@ -94,9 +94,11 @@ class DirectorySource (Source, PicklingHelperMixin, FilesystemWatchMixin):
 		return not path.samefile(self.directory , self._parent_path())
 
 	def get_parent(self):
-		if not self.has_parent():
-			return super(DirectorySource, self).has_parent(self)
-		return DirectorySource(self._parent_path())
+		return (
+			DirectorySource(self._parent_path())
+			if self.has_parent()
+			else super(DirectorySource, self).has_parent(self)
+		)
 
 	def get_description(self):
 		return _("Directory source %s") % self.directory

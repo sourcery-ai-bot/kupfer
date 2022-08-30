@@ -43,15 +43,14 @@ class ShowSource (Action):
 		if not filename:
 			return leaf
 		root, ext = os.path.splitext(filename)
-		if ext.lower() == ".pyc" and os.path.exists(root + ".py"):
-			return FileLeaf(root + ".py")
+		if ext.lower() == ".pyc" and os.path.exists(f"{root}.py"):
+			return FileLeaf(f"{root}.py")
 
 		if not os.path.exists(filename):
 			# handle modules in zip or eggs
 			import pkgutil
-			pfull = "kupfer.plugin." + plugin_id
-			loader = pkgutil.get_loader(pfull)
-			if loader:
+			pfull = f"kupfer.plugin.{plugin_id}"
+			if loader := pkgutil.get_loader(pfull):
 				return TextLeaf(loader.get_source(pfull))
 		return FileLeaf(filename)
 
@@ -73,8 +72,7 @@ class Plugin (Leaf):
 	def get_description(self):
 		setctl = settings.GetSettingsController()
 		enabled = setctl.get_plugin_enabled(self.object["name"])
-		return u"%s (%s)" % (self.object["description"],
-				_("enabled") if enabled else _("disabled"))
+		return f'{self.object["description"]} ({_("enabled") if enabled else _("disabled")})'
 	def get_icon_name(self):
 		return "package-x-generic"
 

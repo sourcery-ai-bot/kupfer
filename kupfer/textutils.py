@@ -63,10 +63,7 @@ def extract_title_body(text, maxtitlelen=60):
 		firstline, rest = split_first_words(text, maxtitlelen)
 	else:
 		return firstline, rest
-	if rest.strip():
-		return firstline, text
-	else:
-		return text, u""
+	return (firstline, text) if rest.strip() else (text, u"")
 
 if __name__ == '__main__':
 	# unicode doctest hack

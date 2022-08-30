@@ -65,9 +65,11 @@ class PuttyOpenSession(Action):
 		yield HostLeaf
 
 	def valid_for_item(self, item):
-		if item.check_key(HOST_SERVICE_NAME_KEY):
-			if item[HOST_SERVICE_NAME_KEY] == 'ssh':
-				return True
+		if (
+			item.check_key(HOST_SERVICE_NAME_KEY)
+			and item[HOST_SERVICE_NAME_KEY] == 'ssh'
+		):
+			return True
 		return item.check_key(PUTTY_SESSION_KEY)
 
 

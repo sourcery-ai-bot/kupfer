@@ -66,9 +66,8 @@ def store_icon(key, icon_size, icon):
 	"""
 	Store an icon in cache. It must not have been stored before
 	"""
-	assert key not in icon_cache.get(icon_size, ()), \
-		"icon %s already in cache" % key
-	assert icon, "icon %s may not be %s" % (key, icon)
+	assert key not in icon_cache.get(icon_size, ()), f"icon {key} already in cache"
+	assert icon, f"icon {key} may not be {icon}"
 	icon_rec = {"icon":icon, "accesses":0}
 	icon_cache.setdefault(icon_size, {})[key] = icon_rec
 
@@ -202,8 +201,7 @@ def get_gicon_for_file(uri):
 		return None
 
 	finfo = gfile.query_info(FILE_ATTRIBUTE_STANDARD_ICON)
-	gicon = finfo.get_attribute_object(FILE_ATTRIBUTE_STANDARD_ICON)
-	return gicon
+	return finfo.get_attribute_object(FILE_ATTRIBUTE_STANDARD_ICON)
 
 def get_icon_for_gicon(gicon, icon_size):
 	"""
@@ -269,9 +267,8 @@ class IconRenderer (object):
 	@classmethod
 	def pixbuf_for_file(cls, file_path, icon_size):
 		try:
-			icon = gtk.gdk.pixbuf_new_from_file_at_size(file_path, icon_size,
-			                                            icon_size)
-			return icon
+			return gtk.gdk.pixbuf_new_from_file_at_size(file_path, icon_size, icon_size)
+
 		except GError:
 			pretty.print_exc(__name__)
 
@@ -336,10 +333,7 @@ def get_good_name_for_icon_names(names):
 	"""Return first name in @names that exists
 	in current icon theme, or None
 	"""
-	for name in names:
-		if _default_theme.has_icon(name):
-			return name
-	return None
+	return next((name for name in names if _default_theme.has_icon(name)), None)
 
 def get_gicon_for_names(*names):
 	return ThemedIcon(names)

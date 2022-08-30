@@ -44,7 +44,7 @@ class ScreenSession (Leaf):
 			if self.object == pid:
 				break
 		else:
-			return "%s (%s)" % (self.name, self.object)
+			return f"{self.name} ({self.object})"
 		# Handle localization of status
 		status_dict = {
 			"Attached": _("Attached"),
@@ -63,8 +63,10 @@ class ScreenSessionsSource (Source, FilesystemWatchMixin):
 		super(ScreenSessionsSource, self).__init__(_("Screen Sessions"))
 
 	def initialize(self):
-		self.screen_dir = (os.getenv("SCREENDIR") or
-				"/var/run/screen/S-%s" % get_username())
+		self.screen_dir = (
+			os.getenv("SCREENDIR") or f"/var/run/screen/S-{get_username()}"
+		)
+
 		if not os.path.exists(self.screen_dir):
 			self.screen_dir = None
 			self.output_debug("Screen socket dir or SCREENDIR not found")
@@ -92,7 +94,7 @@ class AttachScreen (Action):
 		super(AttachScreen, self).__init__(name)
 	def activate(self, leaf):
 		pid = leaf.object
-		action = "screen -x -R %s" % pid
-		action_argv = ['screen', '-x', '-R', ('%s' % pid)]
+		action = f"screen -x -R {pid}"
+		action_argv = ['screen', '-x', '-R', f'{pid}']
 		utils.spawn_in_terminal(action_argv)
 

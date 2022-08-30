@@ -45,9 +45,7 @@ def _parse_encoding_header(response, default="UTF-8"):
 	"""
 	ctype = response.getheader("content-type", "")
 	parts = ctype.split("charset=", 1)
-	if len(parts) > 1:
-		return parts[-1]
-	return default
+	return parts[-1] if len(parts) > 1 else default
 
 
 def _translate(text, lang):
@@ -231,7 +229,7 @@ class TranslateUrl(Action):
 	def activate(self, leaf, iobj):
 		dest_lang = iobj.object
 		params = urllib.urlencode(dict(u=leaf.object, sl='auto', tl=dest_lang ))
-		url = 'http://translate.google.com/translate?' + params
+		url = f'http://translate.google.com/translate?{params}'
 		utils.show_url(url)
 
 	def item_types(self):
@@ -263,8 +261,17 @@ class OpenTranslatePage (Action):
 	def activate(self, leaf, iobj):
 		text = urllib.quote(unicode(leaf.object).encode('utf-8'))
 		dest_lang = iobj.object
-		url = 'http://' + _GOOGLE_TRANSLATE_HOST + _GOOGLE_TRANS_LANG_PATH + \
-				"#auto|" + dest_lang + "|" + text
+		url = (
+			(
+				(
+					f'http://{_GOOGLE_TRANSLATE_HOST}{_GOOGLE_TRANS_LANG_PATH}'
+					+ "#auto|"
+				)
+				+ dest_lang
+			)
+			+ "|"
+		) + text
+
 		utils.show_url(url)
 
 	def item_types(self):

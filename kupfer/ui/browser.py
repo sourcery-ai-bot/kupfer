@@ -37,9 +37,7 @@ _escape_table = {
 	}
 
 def tounicode(ustr):
-	if isinstance(ustr, unicode):
-		return ustr
-	return ustr.decode("UTF-8", "replace")
+	return ustr if isinstance(ustr, unicode) else ustr.decode("UTF-8", "replace")
 
 def escape_markup_str(mstr):
 	"""
@@ -145,8 +143,7 @@ class LeafModel (object):
 
 	def _get_column(self, treepath, col):
 		iter = self.store.get_iter(treepath)
-		val = self.store.get_value(iter, col)
-		return val
+		return self.store.get_value(iter, col)
 
 	def get_object(self, path):
 		return self._get_column(path, self.object_column)
@@ -208,12 +205,15 @@ class LeafModel (object):
 		# Previously we used the alias that was matched,
 		# but it can be too confusing or ugly
 		name = escape_markup_str(unicode(leaf))
-		desc = escape_markup_str(leaf.get_description() or "")
-		if desc:
-			text = u'%s\n<small>%s</small>' % (name, desc, )
-		else:
-			text = u'%s' % (name, )
-		return text
+		return (
+			u'%s\n<small>%s</small>'
+			% (
+				name,
+				desc,
+			)
+			if (desc := escape_markup_str(leaf.get_description() or ""))
+			else f'{name}'
+		)
 
 	def get_aux_info(self, leaf):
 		# info: display arrow if leaf has content
@@ -223,11 +223,7 @@ class LeafModel (object):
 		else:
 			content_mark = u"\N{BLACK LEFT-POINTING SMALL TRIANGLE}"
 
-		info = u""
-		if learn.is_favorite(leaf):
-			info += u"\N{BLACK STAR}"
-		else:
-			info += fill_space
+		info = u"" + (u"\N{BLACK STAR}" if learn.is_favorite(leaf) else fill_space)
 		if hasattr(leaf, "has_content") and leaf.has_content():
 			info += content_mark
 		return info
@@ -377,9 +373,7 @@ class MatchView (gtk.Bin):
 		"""
 		Update interface to display the currently selected match
 		"""
-		# update icon
-		icon = self.cur_icon
-		if icon:
+		if icon := self.cur_icon:
 			if self.match_state is State.NoMatch:
 				icon = self._dim_icon(icon)
 			if icon and self.object_stack:
@@ -409,7 +403,7 @@ class MatchView (gtk.Bin):
 		text = unicode(self.cur_text)
 		key = unicode(self.cur_match).lower()
 
-		format_match=(lambda m: u"<u><b>%s</b></u>" % escape_markup_str(m))
+		format_match = lambda m: f"<u><b>{escape_markup_str(m)}</b></u>"
 		markup = relevance.formatCommonSubstrings(text, key,
 				format_clean=escape_markup_str,
 				format_match=format_match)
@@ -433,10 +427,10 @@ class MatchView (gtk.Bin):
 
 	def set_match(self, match=None, state=None, update=True):
 		self.cur_match = match
-		if state:
-			self.match_state = state
-		else:
-			self.match_state = (State.NoMatch, State.Match)[self.cur_match != None]
+		self.match_state = (
+			state or (State.NoMatch, State.Match)[self.cur_match != None]
+		)
+
 		if update:
 			self.update_match()
 
@@ -455,20 +449,17 @@ class MatchView (gtk.Bin):
 		new_label_width = self.label_char_width - self.preedit_char_width
 		self.label.set_width_chars(new_label_width)
 		preedit.set_width_chars(self.preedit_char_width)
-		pass
 
 	def shrink_preedit(self, preedit):
 		self.label.set_width_chars(self.label_char_width)
 		preedit.set_width_chars(0)
-		pass
 
 	def inject_preedit(self, preedit):
 		"""
 		@preedit: Widget to be injected or None
 		"""
 		if preedit:
-			old_parent = preedit.get_parent()
-			if old_parent:
+			if old_parent := preedit.get_parent():
 				old_parent.remove(preedit)
 			self.shrink_preedit(preedit)
 			self._editbox.pack_start(preedit, False, True, 0)
@@ -631,11 +622,11 @@ class Search (gtk.Bin):
 		"""
 		Upwards in the table
 		"""
-		row_at_path = lambda p: p[0]
-
 		# go up, simply. close table if we go up from row 0
 		path, col = self.table.get_cursor()
 		if path:
+			row_at_path = lambda p: p[0]
+
 			r = row_at_path(path)
 			if r >= 1:
 				self._table_set_cursor_at_row(r-min(rows_count, r))
@@ -646,8 +637,6 @@ class Search (gtk.Bin):
 		"""
 		Down in the table
 		"""
-		row_at_path = lambda p: p[0]
-
 		table_visible = self.get_table_visible()
 		# if no data is loaded (frex viewing catalog), load
 		# if too little data is loaded, try load more
@@ -656,6 +645,8 @@ class Search (gtk.Bin):
 		if len(self.model) >= 1:
 			path, col = self.table.get_cursor()
 			if path:
+				row_at_path = lambda p: p[0]
+
 				r = row_at_path(path)
 				if len(self.model) - rows_count <= r:
 					self.populate(self.show_more)
@@ -805,18 +796,21 @@ class LeafSearch (Search):
 	"""
 	def get_nomatch_name_icon(self, empty):
 		get_pbuf = \
-			lambda m: (m.get_thumbnail(self.icon_size*4/3, self.icon_size) or \
-					m.get_pixbuf(self.icon_size))
+				lambda m: (m.get_thumbnail(self.icon_size*4/3, self.icon_size) or \
+						m.get_pixbuf(self.icon_size))
 		if empty and self.source:
 			return (_("%s is empty") %
 					escape_markup_str(unicode(self.source)),
 					get_pbuf(self.source))
 		elif self.source:
-			return (_('No matches in %(src)s for "%(query)s"') % {
-				"src": u"<i>%s</i>" % escape_markup_str(unicode(self.source)),
-				"query": escape_markup_str(self.text),
-				},
-				get_pbuf(self.source))
+			return (
+				_('No matches in %(src)s for "%(query)s"')
+				% {
+					"src": f"<i>{escape_markup_str(unicode(self.source))}</i>",
+					"query": escape_markup_str(self.text),
+				}
+			), get_pbuf(self.source)
+
 		else:
 			return _("No matches"), icons.get_icon_for_name("kupfer-object",
 					self.icon_size)
@@ -842,10 +836,11 @@ class ActionSearch (Search):
 	"""
 	def get_nomatch_name_icon(self, empty=False):
 		# don't look up icons too early
-		if not self._initialized:
-			return ("", None)
-		return _("No action"), icons.get_icon_for_name("gtk-execute",
-				self.icon_size)
+		return (
+			(_("No action"), icons.get_icon_for_name("gtk-execute", self.icon_size))
+			if self._initialized
+			else ("", None)
+		)
 	def setup_empty(self):
 		self.handle_no_matches()
 		self.hide_table()
@@ -942,7 +937,7 @@ class Interface (gobject.GObject):
 			"Tab", "ISO_Left_Tab", "BackSpace", "Escape", "Delete",
 			"space", 'Page_Up', 'Page_Down', 'Home'
 			)
-		self.key_book = dict((k, gtk.gdk.keyval_from_name(k)) for k in keys)
+		self.key_book = {k: gtk.gdk.keyval_from_name(k) for k in keys}
 		if not text_direction_is_ltr():
 			# for RTL languages, simply swap the meaning of Left and Right
 			# (for keybindings!)
@@ -1011,11 +1006,10 @@ class Interface (gobject.GObject):
 			if not akeyv:
 				continue
 			if akeyv == keyv and (amodf == (event.state & modifiers)):
-				action_method = getattr(self, action, None)
-				if not action_method:
-					pretty.print_error(__name__, "Action invalid '%s'" % action)
-				else:
+				if action_method := getattr(self, action, None):
 					action_method()
+				else:
+					pretty.print_error(__name__, "Action invalid '%s'" % action)
 				return True
 
 		key_book = self.key_book
@@ -1025,10 +1019,7 @@ class Interface (gobject.GObject):
 			# translate extra commands to normal commands here
 			# and remember skipped chars
 			if keyv == key_book["space"]:
-				if shift_mask:
-					keyv = key_book["Up"]
-				else:
-					keyv = key_book["Down"]
+				keyv = key_book["Up"] if shift_mask else key_book["Down"]
 			elif keyv == ord("/") and has_selection:
 				keyv = key_book["Right"]
 			elif keyv == ord(",") and has_selection:
@@ -1036,9 +1027,7 @@ class Interface (gobject.GObject):
 					return True
 			elif keyv in init_text_keys:
 				if self.try_enable_text_mode():
-					# swallow if it is the direct key
-					swallow = (keyv == direct_text_key)
-					return swallow
+					return (keyv == direct_text_key)
 		if text_mode and keyv in (key_book["Left"], key_book["Right"]):
 			# pass these through in text mode
 			return False
@@ -1161,8 +1150,7 @@ class Interface (gobject.GObject):
 		softly (without visible update), and unset _reset_to_toplevel marker.
 		"""
 		pane = pane or self._pane_for_widget(self.current)
-		newsrc = self.data_controller.soft_reset(pane)
-		if newsrc:
+		if newsrc := self.data_controller.soft_reset(pane):
 			self.current.set_source(newsrc)
 		self._reset_to_toplevel = False
 
@@ -1199,13 +1187,10 @@ class Interface (gobject.GObject):
 		# delete/go up through stource stack
 		if self.current.is_showing_result():
 			self.reset_current(populate=True)
-		else:
-			if self._browse_up():
-				pass
-			else:
-				self.reset()
-				self.reset_current()
-				self._reset_to_toplevel = True
+		elif not self._browse_up():
+			self.reset()
+			self.reset_current()
+			self._reset_to_toplevel = True
 		self.reset_text()
 
 	def _relax_search_terms(self):
@@ -1230,9 +1215,7 @@ class Interface (gobject.GObject):
 		"""Perform a soft reset if possible and then try enabling text mode"""
 		if self._reset_to_toplevel:
 			self.soft_reset()
-		if self.get_can_enter_text_mode():
-			return self.toggle_text_mode(True)
-		return False
+		return self.toggle_text_mode(True) if self.get_can_enter_text_mode() else False
 
 	def toggle_text_mode(self, val):
 		"""Toggle text mode on/off per @val,
@@ -1246,10 +1229,7 @@ class Interface (gobject.GObject):
 
 	def toggle_text_mode_quick(self):
 		"""Toggle text mode or not, if we can or not, without reset"""
-		if self._is_text_mode:
-			self._is_text_mode = False
-		else:
-			self._is_text_mode = True
+		self._is_text_mode = not self._is_text_mode
 		self.update_text_mode()
 
 	def update_text_mode(self):
@@ -1456,14 +1436,14 @@ class Interface (gobject.GObject):
 	def _selection_changed(self, widget, match):
 		pane = self._pane_for_widget(widget)
 		self.data_controller.select(pane, match)
-		if not widget is self.current:
+		if widget is not self.current:
 			return
 		self._description_changed()
 
 	def _description_changed(self):
 		match = self.current.get_current()
 		desc = match and match.get_description() or ""
-		markup = "<small>%s</small>" % (escape_markup_str(desc), )
+		markup = f"<small>{escape_markup_str(desc)}</small>"
 		self.label.set_markup(markup)
 
 	def put_text(self, text):
@@ -1476,9 +1456,10 @@ class Interface (gobject.GObject):
 		self.entry.set_position(-1)
 
 	def put_files(self, fileuris):
-		leaves = map(interface.get_fileleaf_for_path,
-			filter(None, [gio.File(U).get_path() for U in fileuris]))
-		if leaves:
+		if leaves := map(
+			interface.get_fileleaf_for_path,
+			filter(None, [gio.File(U).get_path() for U in fileuris]),
+		):
 			self.data_controller.insert_objects(data.SourcePane, leaves)
 
 	def _reset_input_timer(self):

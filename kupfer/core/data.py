@@ -258,10 +258,9 @@ class LeafPane (Pane, pretty.OutputMixin):
 		"""Try to browse up to previous sources, from current
 		source"""
 		succ = self.pop_source()
-		if not succ:
-			if self.source.has_parent():
-				self.source_rebase(self.source.get_parent())
-				succ = True
+		if not succ and self.source.has_parent():
+			self.source_rebase(self.source.get_parent())
+			succ = True
 		if succ:
 			self.refresh_data()
 		return succ
@@ -294,7 +293,7 @@ class LeafPane (Pane, pretty.OutputMixin):
 		filter for action @item
 		"""
 		self.latest_key = key
-		sources = [ self.get_source() ] if not text_mode else []
+		sources = [] if text_mode else [ self.get_source() ]
 		if key and self.is_at_source_root():
 			# Only use text sources when we are at root catalog
 			sc = GetSourceController()
@@ -367,8 +366,7 @@ class SecondaryObjectPane (LeafPane):
 		self.current_item = item
 		self.current_action = act
 		if item and act:
-			ownsrc = actioncompat.iobject_source_for_action(act, item)
-			if ownsrc:
+			if ownsrc := actioncompat.iobject_source_for_action(act, item):
 				self.source_rebase(ownsrc)
 			else:
 				sc = GetSourceController()
@@ -674,13 +672,13 @@ class DataController (gobject.GObject, pretty.OutputMixin):
 		if interactive:
 			ctl.search(key, wrapcontext, text_mode)
 		else:
-			timeout = 300 if lazy else 0 if not key else 50//len(key)
+			timeout = 300 if lazy else 50//len(key) if key else 0
 			ctl.outstanding_search = gobject.timeout_add(timeout, ctl.search, 
 					key, wrapcontext, text_mode)
 
 	def _pane_search_result(self, panectl, match,match_iter, wrapcontext, pane):
 		search_id, context = wrapcontext
-		if not search_id is panectl.outstanding_search_id:
+		if search_id is not panectl.outstanding_search_id:
 			self.output_debug("Skipping late search", match, context)
 			return True
 		self.emit("search-result", pane, match, match_iter, context)
@@ -696,7 +694,7 @@ class DataController (gobject.GObject, pretty.OutputMixin):
 		panectl.select(item)
 		if pane is SourcePane:
 			assert not item or isinstance(item, base.Leaf), \
-					"Selection in Source pane is not a Leaf!"
+						"Selection in Source pane is not a Leaf!"
 			# populate actions
 			citem = self._get_pane_object_composed(self.source_pane)
 			self.action_pane.set_item(citem)
@@ -706,7 +704,7 @@ class DataController (gobject.GObject, pretty.OutputMixin):
 				self._populate_third_pane()
 		elif pane is ActionPane:
 			assert not item or isinstance(item, base.Action), \
-					"Selection in Source pane is not an Action!"
+						"Selection in Source pane is not an Action!"
 			self.object_stack_clear(ObjectPane)
 			if item and item.requires_object():
 				newmode = SourceActionObjectMode
@@ -719,7 +717,7 @@ class DataController (gobject.GObject, pretty.OutputMixin):
 				self._populate_third_pane()
 		elif pane is ObjectPane:
 			assert not item or isinstance(item, base.Leaf), \
-					"Selection in Object pane is not a Leaf!"
+						"Selection in Object pane is not a Leaf!"
 
 	def _populate_third_pane(self):
 		citem = self._get_pane_object_composed(self.source_pane)
@@ -836,7 +834,7 @@ class DataController (gobject.GObject, pretty.OutputMixin):
 		sc = GetSourceController()
 		qf = qfurl.qfurl(url=url)
 		found = qf.resolve_in_catalog(sc.sources)
-		if found and not found == self.source_pane.get_selection():
+		if found and found != self.source_pane.get_selection():
 			self._insert_object(SourcePane, found)
 
 	def compose_selection(self):

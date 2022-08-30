@@ -51,7 +51,7 @@ class GroupingLeaf (Leaf):
 		try:
 			return iter(self.all(key)).next()
 		except StopIteration:
-			raise KeyError("%s has no slot %s" % (self, key))
+			raise KeyError(f"{self} has no slot {key}")
 
 	def all(self, key):
 		"Return iterator of all values for @key"
@@ -121,14 +121,12 @@ class GroupingSource (Source):
 		leaves = sort_func(self._make_group_leader(groups[K]) for K in keys)
 		mergetime = time.time() - starttime
 		if mergetime > 0.05:
-			self.output_debug("Warning(?): merged in %s seconds" % mergetime)
+			self.output_debug(f"Warning(?): merged in {mergetime} seconds")
 		return itertools.chain(non_group_leaves, leaves)
 
 	def repr_key(self):
 		# Distinguish when used as GroupingSource
-		if type(self) is GroupingSource:
-			return unicode(self)
-		return Source.repr_key(self)
+		return unicode(self) if type(self) is GroupingSource else Source.repr_key(self)
 
 	@classmethod
 	def _make_group_leader(cls, leaves):
@@ -163,14 +161,14 @@ class ToplevelGroupingSource (GroupingSource):
 		return GroupingSource(self.category, sources)
 
 	def initialize(self):
-		if not self.category in self._sources:
+		if self.category not in self._sources:
 			self._sources[self.category] = weakref.WeakKeyDictionary()
 		self._sources[self.category][self] = 1
-		self.output_debug("Register %s source %s" % (self.category, self))
+		self.output_debug(f"Register {self.category} source {self}")
 
 	def finalize(self):
 		del self._sources[self.category][self]
-		self.output_debug("Unregister %s source %s" % (self.category, self))
+		self.output_debug(f"Unregister {self.category} source {self}")
 
 class _GroupedItemsSource(Source):
 	def __init__(self, leaf):
@@ -178,8 +176,7 @@ class _GroupedItemsSource(Source):
 		self._leaf = leaf
 
 	def get_items(self):
-		for leaf in self._leaf.links:
-			yield leaf
+		yield from self._leaf.links
 
 	def repr_key(self):
 		return repr(self._leaf)

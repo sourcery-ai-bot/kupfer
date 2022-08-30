@@ -118,8 +118,7 @@ class ChangeStatus(Action):
 		Action.__init__(self, _('Change Global Status To...'))
 
 	def activate(self, leaf, iobj):
-		interface = _create_dbus_connection((iobj.object != 'offline'))
-		if interface:
+		if interface := _create_dbus_connection((iobj.object != 'offline')):
 			interface.change_status(iobj.object, '', '')
 
 	def item_types(self):
@@ -193,10 +192,13 @@ class ContactsSource(AppLeafContentMixin, ToplevelGroupingSource,
 			for contact in interface.list_contacts(account):
 				name = contact['name'] or contact['jid']
 				resources = contact['resources'][0][0] if contact['resources'] else u''
-				jc = GajimContact(contact['jid'], name, \
-						_STATUSES.get(contact['show'], contact['show']), \
-						resources, account)
-				yield jc
+				yield GajimContact(
+					contact['jid'],
+					name,
+					_STATUSES.get(contact['show'], contact['show']),
+					resources,
+					account,
+				)
 
 	def get_icon_name(self):
 		return 'gajim'

@@ -34,8 +34,7 @@ def get_vim_files(filepath):
 			## Now find the jumplist
 			if us_line.startswith("-'  "):
 				parts = us_line.split(None, 3)
-				recentfile = os.path.expanduser(parts[-1].strip())
-				if recentfile:
+				if recentfile := os.path.expanduser(parts[-1].strip()):
 					recents.append(recentfile)
 	return datatools.UniqueIterator(recents)
 

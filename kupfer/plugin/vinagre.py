@@ -41,11 +41,11 @@ class VinagreStartSession(Action):
 			host = leaf[HOST_ADDRESS_KEY]
 			port = ''
 			if leaf.check_key(HOST_SERVICE_PORT_KEY):
-				port = ':' + leaf[HOST_SERVICE_PORT_KEY]
+				port = f':{leaf[HOST_SERVICE_PORT_KEY]}'
 			user = ''
 			if leaf.check_key(HOST_SERVICE_USER_KEY):
-				user = leaf[HOST_SERVICE_USER_KEY] + '@'
-			url = '%s://%s%s%s' % (service, user, host, port)
+				user = f'{leaf[HOST_SERVICE_USER_KEY]}@'
+			url = f'{service}://{user}{host}{port}'
 			utils.spawn_async(["vinagre", url])
 
 	def get_icon_name(self):

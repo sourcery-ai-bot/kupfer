@@ -27,7 +27,7 @@ class SelectedFile (FileLeaf):
 		FileLeaf.__init__(self, filepath, _('Selected File "%s"') % basename)
 
 	def __repr__(self):
-		return "<%s %s>" % (__name__, self.qf_id)
+		return f"<{__name__} {self.qf_id}>"
 
 class SelectedFiles (MultipleLeaf):
 	qf_id = "selectedfile"
@@ -36,7 +36,7 @@ class SelectedFiles (MultipleLeaf):
 		MultipleLeaf.__init__(self, files, _("Selected Files"))
 
 	def __repr__(self):
-		return "<%s %s>" % (__name__, self.qf_id)
+		return f"<{__name__} {self.qf_id}>"
 
 class InvisibleSourceLeaf (SourceLeaf):
 	"""Hack to hide this source"""

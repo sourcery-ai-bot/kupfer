@@ -57,9 +57,7 @@ class RecentsSource (AppLeafContentMixin, Source, PicklingHelperMixin):
 
 	def _get_abiword_file(self):
 		abifile = os.path.expanduser("~/.AbiSuite/AbiWord.Profile")
-		if not os.path.exists(abifile):
-			return None
-		return abifile
+		return abifile if os.path.exists(abifile) else None
 
 	def get_items(self):
 		abifile = self._get_abiword_file()

@@ -103,5 +103,4 @@ class GetKeyDialogController(object):
 
 def ask_for_key(check_callback=None, previous_key=None):
 	dlg = GetKeyDialogController(check_callback, previous_key)
-	result = dlg.run()
-	return result
+	return dlg.run()

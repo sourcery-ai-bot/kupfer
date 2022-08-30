@@ -36,9 +36,9 @@ _builtin_modules = frozenset([
 ])
 
 class _BuiltinObject (type):
-	def __new__(mcls, name, bases, dict):
+	def __new__(cls, name, bases, dict):
 		dict["_is_builtin"] = dict["__module__"] in _builtin_modules
-		return type.__new__(mcls, name, bases, dict)
+		return type.__new__(cls, name, bases, dict)
 
 
 class KupferObject (object):
@@ -87,10 +87,10 @@ class KupferObject (object):
 
 	def __repr__(self):
 		key = self.repr_key()
-		keys = " %s" % (key, ) if key else ""
+		keys = f" {key}" if key else ""
 		if self._is_builtin:
-			return "<builtin.%s%s>" % (self.__class__.__name__, keys)
-		return "<%s.%s%s>" % (self.__module__, self.__class__.__name__, keys)
+			return f"<builtin.{self.__class__.__name__}{keys}>"
+		return f"<{self.__module__}.{self.__class__.__name__}{keys}>"
 
 	def repr_key(self):
 		"""
@@ -122,12 +122,10 @@ class KupferObject (object):
 		The methods are tried in that order.
 		"""
 		gicon = self.get_gicon()
-		pbuf = gicon and icons.get_icon_for_gicon(gicon, icon_size)
-		if pbuf:
+		if pbuf := gicon and icons.get_icon_for_gicon(gicon, icon_size):
 			return pbuf
 		icon_name = self.get_icon_name()
-		icon = icon_name and icons.get_icon_for_name(icon_name, icon_size)
-		if icon:
+		if icon := icon_name and icons.get_icon_for_name(icon_name, icon_size):
 			return icon
 		return icons.get_icon_for_name(self.fallback_icon_name, icon_size)
 
@@ -392,26 +390,25 @@ class Source (KupferObject, pretty.OutputMixin):
 		can handle sorting and caching.
 		if @force_update, ignore cache, print number of items loaded
 		"""
-		if self.should_sort_lexically():
-			# sort in locale order
-			sort_func = locale_sort
-		else:
-			sort_func = lambda x: x
-
+		sort_func = locale_sort if self.should_sort_lexically() else (lambda x: x)
 		if self.is_dynamic():
 			if force_update:
 				return sort_func(self.get_items_forced())
 			else:
 				return sort_func(self.get_items())
 
-		if self.cached_items is None or force_update:
-			if force_update:
-				self.cached_items = aslist(sort_func(self.get_items_forced()))
-				self.output_info("Loaded %d items" % len(self.cached_items))
-			else:
-				self.cached_items = \
+		if (
+			self.cached_items is None
+			and force_update
+			or self.cached_items is not None
+			and force_update
+		):
+			self.cached_items = aslist(sort_func(self.get_items_forced()))
+			self.output_info("Loaded %d items" % len(self.cached_items))
+		elif self.cached_items is None:
+			self.cached_items = \
 						datatools.SavedIterable(sort_func(self.get_items()))
-				self.output_debug("Loaded items")
+			self.output_debug("Loaded items")
 		return self.cached_items
 
 	def has_parent(self):

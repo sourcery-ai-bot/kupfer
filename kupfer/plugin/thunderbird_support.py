@@ -71,7 +71,7 @@ class _Table(object):
 			rowid = rowid.split(':')[0]
 		row = self.rows.get(rowid)
 		if not row:
-			row = self.rows[rowid] = dict()
+			row = self.rows[rowid] = {}
 		row[col] = _unescape_data(atom)
 
 	def del_row(self, rowid):
@@ -104,7 +104,7 @@ def _read_mork(filename):
 		if not RE_HEADER.match(header):
 			pretty.print_debug(__name__, '_read_mork: header error', header)
 			return {}
-		for line in mfile.readlines():
+		for line in mfile:
 			# remove blank lines and comments
 			line = line.strip()
 			if not line:
@@ -156,7 +156,7 @@ def _read_mork(filename):
 		# tables
 		match = RE_TABLE.match(data)
 		if match:
-			tableid = ':'.join(match.groups()[0:2])
+			tableid = ':'.join(match.groups()[:2])
 			table = tables.get(tableid)
 			if not table:
 				table = tables[tableid] = _Table(tableid)
@@ -190,14 +190,11 @@ def _read_mork(filename):
 			active_trans = True
 			continue
 
-		match = RE_TRAN_END.match(data)
-		if match:
+		if match := RE_TRAN_END.match(data):
 			tran = True
 			continue
 
-		# dangling rows
-		match = RE_ROW.match(data)
-		if match:
+		if match := RE_ROW.match(data):
 			row = match.groups()
 			tran, rowid = row[:2]
 			table = tables.get('1:80')  # bind to default table
@@ -247,8 +244,7 @@ def _mork2contacts(tables):
 			if not display_name:
 				continue
 			for key in ('PrimaryEmail', 'SecondEmail'):
-				email = row.get(key)
-				if email:
+				if email := row.get(key):
 					yield (display_name, email)
 
 

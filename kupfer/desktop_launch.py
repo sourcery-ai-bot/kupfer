@@ -136,9 +136,7 @@ def replace_format_specs(argv, location, desktop_info, gfilelist):
 	fileiter = iter(gfilelist)
 
 	def get_file_path(gfile):
-		if not gfile:
-			return ""
-		return gfile.get_path() or gfile.get_uri()
+		return gfile.get_path() or gfile.get_uri() if gfile else ""
 
 	def get_next_file_path():
 		try:
@@ -149,13 +147,13 @@ def replace_format_specs(argv, location, desktop_info, gfilelist):
 
 	def replace_single_code(key):
 		"Handle all embedded format codes, including those to be removed"
-		keys = set(["%%", "%f", "%u", "%c", "%k"])
-		deprecated = set(['%d', '%D', '%n', '%N', '%v', '%m'])
+		keys = {"%%", "%f", "%u", "%c", "%k"}
+		deprecated = {'%d', '%D', '%n', '%N', '%v', '%m'}
 		if key in deprecated:
 			return ""
 		if key == "%%":
 			return "%"
-		if key == "%f" or key == "%u":
+		if key in ["%f", "%u"]:
 			if Flags.did_see_large_f or Flags.did_see_small_f:
 				warning_log("Warning, multiple file format specs!")
 				return ""
@@ -164,10 +162,7 @@ def replace_format_specs(argv, location, desktop_info, gfilelist):
 
 		if key == "%c":
 			return gtk_to_unicode(desktop_info["Name"] or location)
-		if key == "%k":
-			return location
-		else:
-			return None
+		return location if key == "%k" else None
 
 	def replace_array_format(elem):
 		"""
@@ -176,7 +171,7 @@ def replace_format_specs(argv, location, desktop_info, gfilelist):
 		Return  flag, arglist
 		where flag is true if something was replaced
 		"""
-		if elem == "%U" or elem == "%F":
+		if elem in ["%U", "%F"]:
 			if Flags.did_see_large_f or Flags.did_see_small_f:
 				warning_log("Warning, multiple file format specs!")
 				return True, []
@@ -223,7 +218,7 @@ def replace_format_specs(argv, location, desktop_info, gfilelist):
 			arg = two_part_unescaper(x, replace_single_code)
 			if arg:
 				new_argv.append(arg)
-	
+
 	if len(gfilelist) > 1 and not Flags.did_see_large_f:
 		supports_single_file = True
 	if not Flags.did_see_small_f and not Flags.did_see_large_f and len(gfilelist):
@@ -403,6 +398,6 @@ if __name__ == '__main__':
 
 	while True:
 		id_ = raw_input("Give me an App ID > ")
-		launch_app_info(get_info_for_id(id_ + ".desktop"), [])
+		launch_app_info(get_info_for_id(f"{id_}.desktop"), [])
 		#launch_app_info(gio.AppInfo("gvim"), [gio.File(".")])
 

@@ -25,7 +25,7 @@ def _noescape_urlencode(items):
 	"""Assemble an url param string from @items, without
 	using any url encoding.
 	"""
-	return "?" + "&".join("%s=%s" % (n,v) for n,v in items)
+	return "?" + "&".join(f"{n}={v}" for n,v in items)
 
 def _urlencode(word):
 	"""Urlencode a single string of bytes @word"""

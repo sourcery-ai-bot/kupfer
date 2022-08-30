@@ -68,14 +68,16 @@ class FrontmostWindow (WindowLeaf):
 		scr = wnck.screen_get_default()
 		active = scr.get_active_window() or scr.get_previously_active_window()
 		# FIXME: Ignore Kupfer's main window reliably
-		if active and active.get_application().get_name() != "kupfer.py":
-			if not active.is_skip_tasklist():
-				return active
+		if (
+			active
+			and active.get_application().get_name() != "kupfer.py"
+			and not active.is_skip_tasklist()
+		):
+			return active
 		wspc = scr.get_active_workspace()
 		for win in reversed(scr.get_windows_stacked()):
-			if not win.is_skip_tasklist():
-				if win.is_on_workspace(wspc):
-					return win
+			if not win.is_skip_tasklist() and win.is_on_workspace(wspc):
+				return win
 	object = property(_get_object, _set_object)
 
 	def repr_key(self):
@@ -95,9 +97,8 @@ class NextWindow (WindowLeaf):
 		scr = wnck.screen_get_default()
 		wspc = scr.get_active_workspace()
 		for win in scr.get_windows_stacked():
-			if not win.is_skip_tasklist():
-				if win.is_on_workspace(wspc):
-					return win
+			if not win.is_skip_tasklist() and win.is_on_workspace(wspc):
+				return win
 	object = property(_get_object, _set_object)
 
 	def repr_key(self):
@@ -177,9 +178,7 @@ class WindowAction (Action):
 		return _get_current_event_time()
 
 	def get_icon_name(self):
-		if not self.icon_name:
-			return super(WindowAction, self).get_icon_name()
-		return self.icon_name
+		return self.icon_name or super(WindowAction, self).get_icon_name()
 
 class ToggleAction (WindowAction):
 	"""A toggle action, performing the enable / disable action as needed,
@@ -223,7 +222,7 @@ class WindowsSource (Source):
 			if not win.is_skip_tasklist():
 				name, app = (win.get_name(), win.get_application().get_name())
 				if name != app and app not in name:
-					name = "%s (%s)" % (name, app)
+					name = f"{name} ({app})"
 				yield WindowLeaf(win, name)
 
 	def get_description(self):

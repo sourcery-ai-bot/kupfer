@@ -98,11 +98,7 @@ def launch_application(app_info, files=(), uris=(), paths=(), track=True,
 		if not is_terminal:
 			svc.launched_application(app_id, pid)
 
-	if track:
-		launch_callback = application_launch_callback
-	else:
-		launch_callback = None
-
+	launch_callback = application_launch_callback if track else None
 	try:
 		desktop_launch.launch_app_info(app_info, files,
 			   timestamp=_current_event_time(), desktop_file=desktop_file,
@@ -145,7 +141,7 @@ class ApplicationsMatcherService (pretty.OutputMixin):
 				"application_identification_v%d.pickle" % version)
 	def _load(self):
 		reg = self._unpickle_register(self._get_filename())
-		self.register = reg if reg else default_associations
+		self.register = reg or default_associations
 		# pretty-print register to debug
 		if self.register:
 			self.output_debug("Learned the following applications")
@@ -170,10 +166,9 @@ class ApplicationsMatcherService (pretty.OutputMixin):
 		return source
 
 	def _pickle_register(self, reg, pickle_file):
-		output = open(pickle_file, "wb")
-		self.output_debug("Saving to %s" % (pickle_file, ))
-		output.write(pickle.dumps(reg, pickle.HIGHEST_PROTOCOL))
-		output.close()
+		with open(pickle_file, "wb") as output:
+			self.output_debug(f"Saving to {pickle_file}")
+			output.write(pickle.dumps(reg, pickle.HIGHEST_PROTOCOL))
 		return True
 
 	def _store(self, app_id, window):
@@ -192,9 +187,7 @@ class ApplicationsMatcherService (pretty.OutputMixin):
 		reg_name = self.register.get(app_id)
 		if reg_name and reg_name in (application.get_name(), res_class):
 			return True
-		if app_id in (application.get_name().lower(), res_class.lower()):
-			return True
-		return False
+		return app_id in (application.get_name().lower(), res_class.lower())
 
 	def launched_application(self, app_id, pid):
 		if self._has_match(app_id):
@@ -216,27 +209,23 @@ class ApplicationsMatcherService (pretty.OutputMixin):
 			if app_pid == pid:
 				self._store(app_id, w)
 				return False
-		if time() > timeout:
-			return False
-		return True
+		return time() <= timeout
 
 	def application_name(self, app_id):
-		if not self._has_match(app_id):
-			return None
-		return self.register[app_id]
+		return self.register[app_id] if self._has_match(app_id) else None
 
 	def application_is_running(self, app_id):
-		for w in self._get_wnck_screen_windows_stacked():
-			if w.get_application() and self._is_match(app_id, w):
-				return True
-		return False
+		return any(
+			w.get_application() and self._is_match(app_id, w)
+			for w in self._get_wnck_screen_windows_stacked()
+		)
 
 	def get_application_windows(self, app_id):
-		application_windows = []
-		for w in self._get_wnck_screen_windows_stacked():
-			if w.get_application() and self._is_match(app_id, w):
-				application_windows.append(w)
-		return application_windows
+		return [
+			w
+			for w in self._get_wnck_screen_windows_stacked()
+			if w.get_application() and self._is_match(app_id, w)
+		]
 
 	def application_to_front(self, app_id):
 		application_windows = self.get_application_windows(app_id)
@@ -249,13 +238,11 @@ class ApplicationsMatcherService (pretty.OutputMixin):
 			# we special-case the desktop
 			# only show desktop if it's the only window of this app
 			if w.get_name() == "x-nautilus-desktop":
-				if len(application_windows) == 1:
-					screen = wnck.screen_get_default()
-					screen.toggle_showing_desktop(True)
-				else:
+				if len(application_windows) != 1:
 					continue
-			wspc = w.get_workspace()
-			if wspc:
+				screen = wnck.screen_get_default()
+				screen.toggle_showing_desktop(True)
+			if wspc := w.get_workspace():
 				wspc.activate(evttime)
 			w.activate(evttime)
 			break

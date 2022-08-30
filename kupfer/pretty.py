@@ -12,7 +12,7 @@ class OutputMixin (object):
 	standard output and debug output
 	"""
 	def _output_category(self):
-		return "[%s] %s:" % (type(self).__module__, type(self).__name__)
+		return f"[{type(self).__module__}] {type(self).__name__}:"
 
 	def _output_core(self, prefix, sep, end, stream, *items):
 		category = self._output_category()
@@ -35,7 +35,7 @@ class OutputMixin (object):
 			self._output_core("Exception in ", "", "\n", sys.stderr)
 			traceback.print_exception(etype, value, tb, file=sys.stderr)
 		else:
-			msg = "%s: %s" % (etype.__name__, value)
+			msg = f"{etype.__name__}: {value}"
 			self._output_core("Exception in ", " ", "\n", sys.stderr, msg)
 
 	def output_debug(self, *items, **kwargs):
@@ -52,7 +52,7 @@ class OutputMixin (object):
 class _StaticOutput (OutputMixin):
 	current_calling_module = None
 	def _output_category(self):
-		return "[%s]:" % (self.current_calling_module, )
+		return f"[{self.current_calling_module}]:"
 
 	def print_info(self, modulename, *args, **kwargs):
 		self.current_calling_module = modulename

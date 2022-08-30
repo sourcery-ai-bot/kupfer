@@ -12,7 +12,7 @@ class Mnemonics (object):
 	as well as the total count
 	"""
 	def __init__(self):
-		self.mnemonics = dict()
+		self.mnemonics = {}
 		self.count = 0
 	def __repr__(self):
 		return "<%s %d %s>" % (self.__class__.__name__, self.count, "".join(["%s: %d, " % (m,c) for m,c in self.mnemonics.iteritems()]))
@@ -58,9 +58,9 @@ class Learning (object):
 		return data
 
 	@classmethod
-	def _pickle_register(self, reg, pickle_file):
+	def _pickle_register(cls, reg, pickle_file):
 		with open(pickle_file, "wb") as output:
-			pretty.print_debug(__name__, "Saving to %s" % (pickle_file, ))
+			pretty.print_debug(__name__, f"Saving to {pickle_file}")
 			output.write(pickle.dumps(reg, pickle.HIGHEST_PROTOCOL))
 		return True
 
@@ -133,8 +133,7 @@ def load():
 	"""
 	global _register
 
-	filepath = config.get_config_file(mnemonics_filename)
-	if filepath:
+	if filepath := config.get_config_file(mnemonics_filename):
 		_register = Learning._unpickle_register(filepath)
 	if not _register:
 		_register = {}

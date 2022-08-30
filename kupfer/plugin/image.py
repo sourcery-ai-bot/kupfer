@@ -33,9 +33,9 @@ class Scale (Action):
 		fpath = leaf.object
 		dirname = os_path.dirname(fpath)
 		head, ext = os_path.splitext(os_path.basename(fpath))
-		filename = "%s_%s%s" % (head, size, ext)
+		filename = f"{head}_{size}{ext}"
 		dpath = utils.get_destpath_in_directory(dirname, filename)
-		argv = ["convert", "-scale", ('%s' % size),  fpath, dpath]
+		argv = ["convert", "-scale", f'{size}', fpath, dpath]
 		runtimehelper.register_async_file_result(dpath)
 		utils.spawn_async(argv)
 		return FileLeaf(dpath)
@@ -55,7 +55,7 @@ class Scale (Action):
 		yield TextLeaf
 
 	@classmethod
-	def _make_size(self, text):
+	def _make_size(cls, text):
 		size = None
 		try:
 			size = "%g" % float(text.strip())
@@ -86,7 +86,7 @@ class RotateBase (Action):
 		fpath = leaf.object
 		dirname = os_path.dirname(fpath)
 		head, ext = os_path.splitext(os_path.basename(fpath))
-		filename = "%s_%s%s" % (head, self.rotation, ext)
+		filename = f"{head}_{self.rotation}{ext}"
 		dpath = utils.get_destpath_in_directory(dirname, filename)
 		argv = ["jpegtran", "-copy", "all", "-rotate", self.rotation, "-outfile",
 		        dpath, fpath]
@@ -134,7 +134,7 @@ class Autorotate (Action):
 
 	def valid_for_item(self, item):
 		root, ext = os_path.splitext(item.object)
-		if not ext.lower() in (".jpeg", ".jpg"):
+		if ext.lower() not in (".jpeg", ".jpg"):
 			return False
 		# Launch jhead to see if 1) it is installed, 2) Orientation nondefault
 		try:

@@ -153,8 +153,7 @@ def get_thumb(gd_client, thumb_url):
 	''' Load thumb from web '''
 	thumb = None
 	if thumb_url:
-		thumb_media = gd_client.GetMedia(thumb_url)
-		if thumb_media:
+		if thumb_media := gd_client.GetMedia(thumb_url):
 			thumb = thumb_media.file_handle.read()
 	return thumb
 
@@ -231,10 +230,11 @@ class PicasaDataCache():
 
 def _get_valid_files_in_dir(dir_path):
 	''' get all files acceptable by picasa in given directory '''
-	files = [os.path.join(dir_path, filename)
-			for filename  in os.listdir(dir_path)
-			if valid_file(filename)]
-	return files
+	return [
+		os.path.join(dir_path, filename)
+		for filename in os.listdir(dir_path)
+		if valid_file(filename)
+	]
 
 
 class PicasaUser(UrlLeaf):
@@ -355,8 +355,7 @@ class UploadDirToPicasa(Action):
 		utask = UploadTask()
 		for obj in objects:
 			dir_path = obj.object
-			files_to_upload = _get_valid_files_in_dir(dir_path)
-			if files_to_upload:
+			if files_to_upload := _get_valid_files_in_dir(dir_path):
 				album_name = os.path.basename(dir_path)
 				utask.add_files_to_new_album(files_to_upload, album_name)
 		return utask

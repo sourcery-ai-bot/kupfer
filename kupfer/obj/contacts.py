@@ -81,11 +81,11 @@ class JabberContact (ContactLeaf):
 	def __init__(self, jid, name, status, resource, slots=None):
 		jslots = {JABBER_JID_KEY: jid, NAME_KEY: name or jid}
 		if slots:
-			jslots.update(slots)
+			jslots |= slots
 		ContactLeaf.__init__(self, jslots, name or jid)
 
 		self._description = _("[%(status)s] %(userid)s/%(service)s") % \
-				{
+					{
 					"status": status,
 					"userid": jid,
 					"service": resource or u"",

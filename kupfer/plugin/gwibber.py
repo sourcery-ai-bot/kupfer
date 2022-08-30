@@ -81,13 +81,12 @@ def _get_messages_for_account(stream, account, transient='0'):
 
 
 def _gwibber_refresh(conn=None):
-	conn = conn or _get_dbus_iface(DBUS_GWIBBER_SERVICE, True)
-	if conn:
+	if conn := conn or _get_dbus_iface(DBUS_GWIBBER_SERVICE, True):
 		conn.Refresh()
 
 
 def _trunc_message(message):
-	return message[:139] + '…' if len(message) > 140 else message
+	return f'{message[:139]}…' if len(message) > 140 else message
 
 
 class Account(Leaf):
@@ -187,8 +186,7 @@ class SendMessage(Action):
 		Action.__init__(self, _('Send Message'))
 
 	def activate(self, leaf):
-		conn = _get_dbus_iface(DBUS_GWIBBER_SERVICE, True)
-		if conn:
+		if conn := _get_dbus_iface(DBUS_GWIBBER_SERVICE, True):
 			conn.SendMessage(_trunc_message(leaf.object))
 			_gwibber_refresh()
 
@@ -210,8 +208,7 @@ class SendMessageBy(Action):
 		Action.__init__(self, _("Send Message To..."))
 
 	def activate(self, leaf, iobj):
-		conn = _get_dbus_iface(DBUS_GWIBBER_SERVICE, True)
-		if conn:
+		if conn := _get_dbus_iface(DBUS_GWIBBER_SERVICE, True):
 			msg = {'message': _trunc_message(leaf.object), 'accounts': [iobj.object]}
 			conn.Send(json_encoder(msg))
 			_gwibber_refresh()
@@ -243,8 +240,7 @@ class SendMessageTo(Action):
 		Action.__init__(self, _("Send Message..."))
 
 	def activate(self, leaf, iobj):
-		conn = _get_dbus_iface(DBUS_GWIBBER_SERVICE, True)
-		if conn:
+		if conn := _get_dbus_iface(DBUS_GWIBBER_SERVICE, True):
 			msg = {'message': _trunc_message(iobj.object),
 					'accounts': [leaf.object]}
 			conn.Send(json_encoder(msg))
@@ -278,10 +274,9 @@ class Reply(Action):
 		if not conn:
 			return
 		rmsg = json_decoder(conn.Get(leaf.id))
-		text = '@%s: %s' % (rmsg['sender']['nick'], iobj.object)
+		text = f"@{rmsg['sender']['nick']}: {iobj.object}"
 		msg = {'message': _trunc_message(text), 'target': rmsg}
-		conn = _get_dbus_iface(DBUS_GWIBBER_SERVICE)
-		if conn:
+		if conn := _get_dbus_iface(DBUS_GWIBBER_SERVICE):
 			conn.Send(json_encoder(msg))
 			_gwibber_refresh()
 
@@ -312,8 +307,7 @@ class DeleteMessage(Action):
 		rmsg = json_decoder(conn.Get(leaf.id))
 		cmd = {'transient': False, 'account': rmsg['account'],
 				'operation': 'delete', 'args': {'message': rmsg}}
-		conn = _get_dbus_iface(DBUS_GWIBBER_SERVICE)
-		if conn:
+		if conn := _get_dbus_iface(DBUS_GWIBBER_SERVICE):
 			conn.PerformOp(json_encoder(cmd))
 			_gwibber_refresh(conn)
 
@@ -334,8 +328,7 @@ class SendPrivate(Action):
 			return
 		rmsg = json_decoder(conn.Get(leaf.id))
 		msg = {'message': _trunc_message(iobj.object), 'private': rmsg}
-		conn = _get_dbus_iface(DBUS_GWIBBER_SERVICE)
-		if conn:
+		if conn := _get_dbus_iface(DBUS_GWIBBER_SERVICE):
 			conn.Send(json_encoder(msg))
 			_gwibber_refresh()
 
@@ -365,9 +358,8 @@ class Retweet(Action):
 		Action.__init__(self, name)
 
 	def activate(self, leaf, iobj=None):
-		conn = _get_dbus_iface(DBUS_GWIBBER_SERVICE, True)
-		if conn:
-			text = '♺ @%s: %s' % (leaf.msg_sender, leaf.object)
+		if conn := _get_dbus_iface(DBUS_GWIBBER_SERVICE, True):
+			text = f'♺ @{leaf.msg_sender}: {leaf.object}'
 			if iobj:
 				msg = {'message': _trunc_message(text), 'accounts': [iobj.object]}
 				conn.Send(json_encoder(msg))
@@ -430,8 +422,7 @@ class AccountsSource(Source):
 		del conn
 		if not services:
 			return
-		conn = _get_dbus_iface(DBUS_GWIBBER_ACCOUNTS, True)
-		if conn:
+		if conn := _get_dbus_iface(DBUS_GWIBBER_ACCOUNTS, True):
 			accounts = json_decoder(conn.List())
 			for account in accounts:
 				service = services[account['service']]
@@ -457,15 +448,14 @@ class SendToAccountSource(Source):
 		if not conn:
 			return
 		services = json_decoder(conn.GetServices())
-		conn = _get_dbus_iface(DBUS_GWIBBER_ACCOUNTS, True)
-		if conn:
+		if conn := _get_dbus_iface(DBUS_GWIBBER_ACCOUNTS, True):
 			for account in json_decoder(conn.List()):
 				aservice = account['service']
 				if aservice not in services:
 					continue
 				service = services[aservice]
 				if not self._required_feature or \
-						self._required_feature in service['features']:
+							self._required_feature in service['features']:
 					yield Account(account, service['name'], False)
 
 	def get_icon_name(self):
@@ -542,8 +532,7 @@ class StreamsSource(Source):
 		self.mark_for_update()
 
 	def get_items(self):
-		conn = _get_dbus_iface(DBUS_GWIBBER_STREAMS, True)
-		if conn:
+		if conn := _get_dbus_iface(DBUS_GWIBBER_STREAMS, True):
 			for stream in json_decoder(conn.List()):
 				yield Stream(stream['name'], stream['id'], stream['account'])
 
@@ -564,8 +553,7 @@ class StreamMessagesSource(Source):
 		self._stream_id = stream.object
 
 	def get_items(self):
-		conn = _get_dbus_iface(DBUS_GWIBBER_STREAMS, True)
-		if conn:
+		if conn := _get_dbus_iface(DBUS_GWIBBER_STREAMS, True):
 			return _get_messages_for_account('all', self._account, self._stream_id)
 
 	def get_icon_name(self):

@@ -63,7 +63,7 @@ class SendSignal(Action):
 
 class _Signal(Leaf):
 	def get_description(self):
-		return "kill -%s ..." % self.object
+		return f"kill -{self.object} ..."
 
 
 # get all signals from signal package
@@ -129,8 +129,7 @@ class TaskSource(Source, PicklingHelperMixin):
 		                   self._async_top_finished, 60)
 
 	def get_items(self):
-		for task in self._cache:
-			yield task
+		yield from self._cache
 		update_wait = self.task_update_interval_sec if self._cache else 0
 		# update after a few seconds
 		self._timer.set(update_wait, self._async_top_start)
@@ -162,7 +161,7 @@ def parse_top_output(out):
 			continue
 
 		if line.startswith('PID'): # assume pid is first col
-			fields_map = dict(((name, pos) for pos, name in enumerate(line.split())))
+			fields_map = {name: pos for pos, name in enumerate(line.split())}
 			fields_count = len(fields_map)
 			continue	# skip header
 
@@ -174,7 +173,7 @@ def parse_top_output(out):
 		cmd = line_fields[-1]
 
 		# read command line
-		proc_file = '/proc/%s/cmdline' % pid
+		proc_file = f'/proc/{pid}/cmdline'
 		if os.path.isfile(proc_file): # also skip (finished) missing tasks
 			with open(proc_file, 'rt') as f:
 				cmd = f.readline().replace('\x00', ' ') or cmd

@@ -167,7 +167,7 @@ class PidginContact(ContactLeaf):
 
 	def repr_key(self):
 		# the repr key should be persistent and hopefully unique
-		return "%s, %s" % (self.protocol, self.object[PIDGIN_JID])
+		return f"{self.protocol}, {self.object[PIDGIN_JID]}"
 
 	def get_description(self):
 		return self._description
@@ -216,9 +216,7 @@ class ContactsSource(AppLeafContentMixin, ToplevelGroupingSource, PicklingHelper
 		jid = interface.PurpleBuddyGetName(buddy)
 		name = interface.PurpleBuddyGetAlias(buddy)
 		_icon = interface.PurpleBuddyGetIcon(buddy)
-		icon = None
-		if _icon != 0:
-			icon = interface.PurpleBuddyIconGetFullPath(_icon)
+		icon = interface.PurpleBuddyIconGetFullPath(_icon) if _icon != 0 else None
 		presenceid = interface.PurpleBuddyGetPresence(buddy)
 		statusid = interface.PurplePresenceGetActiveStatus(presenceid)
 		availability = interface.PurplePresenceIsAvailable(presenceid)
@@ -261,7 +259,7 @@ class ContactsSource(AppLeafContentMixin, ToplevelGroupingSource, PicklingHelper
 			self.all_buddies = {}
 			return
 		is_disconnected = interface.PurpleAccountIsDisconnected
-		conn_accounts = set(a for a in accounts if not is_disconnected(a))
+		conn_accounts = {a for a in accounts if not is_disconnected(a)}
 		for buddy, pcontact in self.all_buddies.items():
 			if pcontact.account not in conn_accounts:
 				del self.all_buddies[buddy]

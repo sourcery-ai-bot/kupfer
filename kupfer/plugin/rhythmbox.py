@@ -43,7 +43,7 @@ def _tostr(ustr):
 
 def play_song(info):
 	uri = _tostr(info["location"])
-	utils.spawn_async(("rhythmbox-client", "--play-uri=%s" % uri))
+	utils.spawn_async(("rhythmbox-client", f"--play-uri={uri}"))
 def enqueue_songs(info, clear_queue=False):
 	songs = list(info)
 	if not songs:
@@ -55,8 +55,7 @@ def enqueue_songs(info, clear_queue=False):
 		uri = _tostr(song["location"])
 		gfile = gio.File(uri)
 		path = gfile.get_path()
-		qargv.append("--enqueue")
-		qargv.append(path)
+		qargv.extend(("--enqueue", path))
 	utils.spawn_async(qargv)
 
 class Play (RunnableLeaf):
@@ -259,12 +258,19 @@ class AlbumLeaf (TrackCollection):
 		cdir = gfile.resolve_relative_path("../").get_path()
 		# We don't support unicode ATM
 		bs_artist_album = \
-			" - ".join([us.encode("ascii", "ignore") for us in (artist, album)])
-		cover_names = ("cover.jpg", "album.jpg", "albumart.jpg",
-				".folder.jpg", "folder.jpg", bs_artist_album + ".jpg")
+				" - ".join([us.encode("ascii", "ignore") for us in (artist, album)])
+		cover_names = (
+			"cover.jpg",
+			"album.jpg",
+			"albumart.jpg",
+			".folder.jpg",
+			"folder.jpg",
+			f"{bs_artist_album}.jpg",
+		)
+
 		for cover_name in os.listdir(cdir):
 			if cover_name.lower() in cover_names:
-				cfile = gfile.resolve_relative_path("../" + cover_name)
+				cfile = gfile.resolve_relative_path(f"../{cover_name}")
 				return cfile.get_path()
 
 	def _get_thumb_mediaart(self):
@@ -275,14 +281,15 @@ class AlbumLeaf (TrackCollection):
 		hspace = "7215ee9c7d9dc229d2921a40e899ec5f"
 		htitle = md5(_tostr(ltitle)).hexdigest()
 		hartist = hspace
-		cache_name = "album-%s-%s.jpeg" % (hartist, htitle)
+		cache_name = f"album-{hartist}-{htitle}.jpeg"
 		return config.get_cache_file(("media-art", cache_name))
 
 	def _get_thumb_rhythmbox(self):
 		artist = self.object[0]["artist"]
 		album = unicode(self)
-		return config.get_cache_file(("rhythmbox", "covers",
-		                              "%s - %s.jpg" % (artist, album)))
+		return config.get_cache_file(
+			("rhythmbox", "covers", f"{artist} - {album}.jpg")
+		)
 
 	def get_thumbnail(self, width, height):
 		if not hasattr(self, "cover_file"):
@@ -311,9 +318,7 @@ class ArtistLeaf (TrackCollection):
 	def get_gicon(self):
 		return icons.ComposedIcon("media-optical", "system-users")
 	def content_source(self, alternate=False):
-		if alternate:
-			return CollectionSource(self)
-		return ArtistAlbumsSource(self)
+		return CollectionSource(self) if alternate else ArtistAlbumsSource(self)
 
 class RhythmboxAlbumsSource (Source):
 	def __init__(self, library):
@@ -364,13 +369,14 @@ def _locale_sort_artist_album_songs(artists):
 	"""
 	for artist in utils.locale_sort(artists):
 		artist_songs = artists[artist]
-		albums = {}
 		albumkey = lambda song: song["album"]
-		for album, songs in itertools.groupby(artist_songs, albumkey):
-			albums[album] = list(songs)
+		albums = {
+			album: list(songs)
+			for album, songs in itertools.groupby(artist_songs, albumkey)
+		}
+
 		for album in utils.locale_sort(albums):
-			for song in albums[album]:
-				yield song
+			yield from albums[album]
 
 class RhythmboxSongsSource (Source):
 	"""The whole song library in Leaf representation"""

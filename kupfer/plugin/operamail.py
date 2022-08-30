@@ -44,7 +44,7 @@ class NewMailAction(Action):
 
 	def activate_multiple(self, objects):
 		recipients = ",".join(email_from_leaf(L) for L in objects)
-		utils.spawn_async(['opera', '-remote', 'openURL(mailto:%s)' % recipients])
+		utils.spawn_async(['opera', '-remote', f'openURL(mailto:{recipients})'])
 
 	def get_icon_name(self):
 		return "mail-message-new"

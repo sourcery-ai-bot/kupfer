@@ -44,7 +44,7 @@ class NewMailAction(Action):
 
 	def activate_multiple(self, objects):
 		recipients = ",".join(email_from_leaf(L) for L in objects)
-		utils.spawn_async(["evolution", "mailto:%s" % recipients])
+		utils.spawn_async(["evolution", f"mailto:{recipients}"])
 
 	def get_icon_name(self):
 		return "mail-message-new"
@@ -69,9 +69,8 @@ class SendFileByMail (Action):
 
 	def activate_multiple(self, objects, iobjects):
 		recipients = ",".join(email_from_leaf(I) for I in iobjects)
-		attachlist = ["attach=%s" % L.object for L in objects]
-		utils.spawn_async(["evolution",
-			"mailto:%s?%s" % (recipients, "&".join(attachlist))])
+		attachlist = [f"attach={L.object}" for L in objects]
+		utils.spawn_async(["evolution", f'mailto:{recipients}?{"&".join(attachlist)}'])
 
 	def item_types(self):
 		yield FileLeaf
@@ -106,8 +105,7 @@ class ContactsSource(AppLeafContentMixin, ToplevelGroupingSource):
 			return
 		for contact in ebook_.get_all_contacts():
 			name = contact.get_property("full-name")
-			email = contact.get_property("email-1")
-			if email:
+			if email := contact.get_property("email-1"):
 				yield EmailContact(email, name)
 
 		yield ComposeMail()

@@ -82,7 +82,11 @@ class VirtualMachine(Leaf):
 
 	def get_actions(self):
 		state = vbox_support.get_machine_state(self.object)
-		if state == vbox_const.VM_STATE_POWEROFF:
+		if (
+			state == vbox_const.VM_STATE_POWEROFF
+			or state != vbox_const.VM_STATE_POWERON
+			and state == vbox_const.VM_STATE_SAVED
+		):
 			yield VMAction(_('Power On'), 'system-run',
 					vbox_const.VM_START_NORMAL)
 			yield VMAction(_('Power On Headless'), 'system-run',
@@ -93,11 +97,6 @@ class VirtualMachine(Leaf):
 			yield VMAction(_('Pause'), 'pause', vbox_const.VM_PAUSE)
 			yield VMAction(_('Reboot'), 'system-reboot',
 					vbox_const.VM_REBOOT, -10)
-		elif state == vbox_const.VM_STATE_SAVED:
-			yield VMAction(_('Power On'), 'system-run',
-					vbox_const.VM_START_NORMAL)
-			yield VMAction(_('Power On Headless'), 'system-run',
-					vbox_const.VM_START_HEADLESS, -5)
 		else:  # VM_STATE_PAUSED
 			yield VMAction(_('Resume'), 'resume', vbox_const.VM_RESUME)
 

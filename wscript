@@ -30,9 +30,8 @@ def _read_git_version():
 	"""Read version from git repo, or from GIT_VERSION"""
 	version = _get_git_version()
 	if not version and os.path.exists("GIT_VERSION"):
-		f = open("GIT_VERSION", "r")
-		version = f.read().strip()
-		f.close()
+		with open("GIT_VERSION", "r") as f:
+			version = f.read().strip()
 	if version:
 		global VERSION
 		VERSION = version
@@ -44,9 +43,8 @@ def _write_git_version():
 	version = _get_git_version()
 	if not version:
 		return False
-	version_file = open("GIT_VERSION", "w")
-	version_file.write(version + "\n")
-	version_file.close()
+	with open("GIT_VERSION", "w") as version_file:
+		version_file.write(version + "\n")
 	return True
 
 
@@ -77,18 +75,20 @@ def gitdist(ctx):
 	import subprocess
 	if not _write_git_version():
 		raise Exception("No version")
-	basename = "%s-%s" % (APPNAME, VERSION)
-	outname = basename + ".tar"
+	basename = f"{APPNAME}-{VERSION}"
+	outname = f"{basename}.tar"
 	proc = subprocess.Popen(
-		["git", "archive", "--format=tar", "--prefix=%s/" % basename, "HEAD"],
-		stdout=subprocess.PIPE)
+		["git", "archive", "--format=tar", f"--prefix={basename}/", "HEAD"],
+		stdout=subprocess.PIPE,
+	)
+
 	fd = os.open(outname, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o666)
 	os.write(fd, proc.communicate()[0])
 	os.close(fd)
 	for distfile in EXTRA_DIST:
 		_tarfile_append_as(outname, distfile, os.path.join(basename, distfile))
 	subprocess.call(["gzip", outname])
-	subprocess.call(["sha1sum", outname + ".gz"])
+	subprocess.call(["sha1sum", f"{outname}.gz"])
 
 def dist(ctx):
 	"The standard waf dist process"
@@ -139,8 +139,7 @@ def configure(conf):
 		try:
 			conf.find_program(prog, var=prog.replace("-", "_").upper())
 		except conf.errors.ConfigurationError:
-			Logs.pprint("YELLOW",
-			             "Optional, allows: %s" % opt_build_programs[prog])
+			Logs.pprint("YELLOW", f"Optional, allows: {opt_build_programs[prog]}")
 
 	if not Options.options.check_deps:
 		return
@@ -170,20 +169,21 @@ def configure(conf):
 		try:
 			conf.find_program(prog, var=prog.replace("-", "_").upper())
 		except conf.errors.ConfigurationError:
-			Logs.pprint("YELLOW", "Optional, allows: %s" % opt_programs[prog])
+			Logs.pprint("YELLOW", f"Optional, allows: {opt_programs[prog]}")
 
 	try:
 		conf.check_python_module("keybinder")
 	except Configure.ConfigurationError:
 		Logs.pprint("RED", "Python module keybinder is recommended")
 		Logs.pprint("RED", "Please see README")
-		
+
 	for mod in opt_pymodules:
 		try:
 			conf.check_python_module(mod)
 		except Configure.ConfigurationError:
-			Logs.pprint("YELLOW", "module %s is recommended, allows %s" % (
-				mod, opt_pymodules[mod]))
+			Logs.pprint(
+				"YELLOW", f"module {mod} is recommended, allows {opt_pymodules[mod]}"
+			)
 
 
 def _new_package(bld, name):
@@ -211,7 +211,7 @@ def _find_packages_in_directory(bld, name):
 			_new_package(bld, dirname)
 
 def _dict_slice(D, keys):
-	return dict((k,D[k]) for k in keys)
+	return {k: D[k] for k in keys}
 
 def build(bld):
 	# always read new version
@@ -220,11 +220,13 @@ def build(bld):
 	# kupfer/
 	# kupfer module version info file
 	version_subst_file = "kupfer/version_subst.py"
-	bld(features="subst",
-		source=version_subst_file + ".in",
+	bld(
+		features="subst",
+		source=f"{version_subst_file}.in",
 		target=version_subst_file,
-		dict = _dict_slice(bld.env,"VERSION DATADIR PACKAGE LOCALEDIR".split())
-		)
+		dict=_dict_slice(bld.env, "VERSION DATADIR PACKAGE LOCALEDIR".split()),
+	)
+
 	bld.install_files("${PYTHONDIR}/kupfer", "kupfer/version_subst.py")
 
 	bld.new_task_gen(

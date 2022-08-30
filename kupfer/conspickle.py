@@ -37,16 +37,20 @@ class ConservativeUnpickler (pickle.Unpickler):
 	}
 	@classmethod
 	def is_safe_symbol(cls, module, name):
-		for pattern in cls.safe_modules:
-			if fnmatch.fnmatchcase(module, pattern):
-				return name in cls.safe_modules[pattern]
-		return False
+		return next(
+			(
+				name in cls.safe_modules[pattern]
+				for pattern in cls.safe_modules
+				if fnmatch.fnmatchcase(module, pattern)
+			),
+			False,
+		)
 
 	def find_class(self, module, name):
 		if module not in sys.modules:
-			raise pickle.UnpicklingError("Refusing to load module %s" % module)
+			raise pickle.UnpicklingError(f"Refusing to load module {module}")
 		if not self.is_safe_symbol(module, name):
-			raise pickle.UnpicklingError("Refusing unsafe %s.%s" % (module, name))
+			raise pickle.UnpicklingError(f"Refusing unsafe {module}.{name}")
 		return pickle.Unpickler.find_class(self, module, name)
 
 	@classmethod
@@ -54,7 +58,7 @@ class ConservativeUnpickler (pickle.Unpickler):
 		unpickler = cls(io.BytesIO(pickledata))
 		return unpickler.load()
 
-class BasicUnpickler (ConservativeUnpickler):
+class BasicUnpickler(ConservativeUnpickler):
 	"""An Unpickler that can only unpickle persistend ids and select builtins
 
 	>>> import pickle
@@ -67,10 +71,12 @@ class BasicUnpickler (ConservativeUnpickler):
 	"""
 
 	safe_modules = {
-		"__builtin__" : set(["object"]),
-		"copy_reg" : set(["_reconstructor"]),
-		"kupfer.puid" : set(["SerializedObject"]),
+		"__builtin__": {"object"},
+		"copy_reg": {"_reconstructor"},
+		"kupfer.puid": {"SerializedObject"},
 	}
+
+
 
 if __name__ == '__main__':
 	import doctest

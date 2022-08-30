@@ -27,8 +27,7 @@ class Template (FileLeaf):
 
 	def get_actions(self):
 		yield CreateDocumentIn()
-		for a in FileLeaf.get_actions(self):
-			yield a
+		yield from FileLeaf.get_actions(self)
 
 	def get_gicon(self):
 		file_gicon = FileLeaf.get_gicon(self)
@@ -109,11 +108,10 @@ class TemplatesSource (Source, FilesystemWatchMixin):
 		Source.__init__(self, _("Document Templates"))
 
 	@classmethod
-	def _get_tmpl_dir(self):
-		tmpl_dir = glib.get_user_special_dir(glib.USER_DIRECTORY_TEMPLATES)
-		if not tmpl_dir:
-			tmpl_dir = os.path.expanduser(DEFAULT_TMPL_DIR)
-		return tmpl_dir
+	def _get_tmpl_dir(cls):
+		return glib.get_user_special_dir(
+			glib.USER_DIRECTORY_TEMPLATES
+		) or os.path.expanduser(DEFAULT_TMPL_DIR)
 
 	def initialize(self):
 		self.monitor_token = self.monitor_directories(self._get_tmpl_dir())

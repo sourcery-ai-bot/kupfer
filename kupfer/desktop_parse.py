@@ -41,9 +41,7 @@ reserved.extend([' ', '\t', '\n'])
 
 def rmquotes(s):
 	"remove first and last char if we can"
-	if len(s) > 1 and s[0] == s[-1] and s[0] in '"\'':
-		return s[1:-1]
-	return s
+	return s[1:-1] if len(s) > 1 and s[0] == s[-1] and s[0] in '"\'' else s
 
 def two_part_unescaper(s, reptable):
 	"Scan @s two characters at a time and replace using @reptable"
@@ -105,8 +103,6 @@ def quote_scanner(s, reptable):
 					add_part(is_quoted, head)
 					part = [part[-1]]
 				is_quoted = not is_quoted
-		else:
-			pass
 	else:
 		# This is a for-else: we did not 'break'
 		# Emit the last if it wasn't already
@@ -121,10 +117,8 @@ def unescape(s):
 
 def unquote_inside(s):
 	"unquote reserved chars inside a quoted string"
-	t = {}
 	slash = '\\'
-	for rep in quoted:
-		t[slash+rep] = rep
+	t = {slash+rep: rep for rep in quoted}
 	return two_part_unescaper(s, t)
 
 def test_unescape():

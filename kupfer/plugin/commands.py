@@ -27,10 +27,10 @@ def finish_command(token, acommand, stdout, stderr, post_result=True):
 	"""Show async error if @acommand returns error output & error status.
 	Else post async result if @post_result.
 	"""
-	max_error_msg=512
 	pretty.print_debug(__name__, "Exited:", acommand)
 	ctx = commandexec.DefaultActionExecutionContext()
 	if acommand.exit_status != 0 and not stdout and stderr:
+		max_error_msg=512
 		try:
 			errstr = kupferstring.fromlocale(stderr)[:max_error_msg]
 			raise OperationError(errstr)
@@ -177,7 +177,7 @@ class Command (TextLeaf):
 
 	def get_description(self):
 		args = u" ".join(unicode(self).split(None, 1)[1:])
-		return u"%s %s" % (self.exepath, args)
+		return f"{self.exepath} {args}"
 
 	def get_gicon(self):
 		return icons.get_gicon_for_file(self.exepath)

@@ -117,7 +117,7 @@ class SourcePickler (pretty.OutputMixin):
 		"""Return cache filename for @source"""
 		# make sure we take the source name into account
 		# so that we get a "break" when locale changes
-		source_id = "%s%s%s" % (repr(source), str(source), source.version)
+		source_id = f"{repr(source)}{str(source)}{source.version}"
 		bytes = hashlib.md5(source_id).digest()
 		hashstr = bytes.encode("base64").rstrip("\n=").replace("/", "-")
 		filename = self.name_template % (hashstr, self.pickle_version)
@@ -153,9 +153,11 @@ class SourcePickler (pretty.OutputMixin):
 		return source
 
 	def pickle_source(self, source):
-		if not self.should_use_cache():
-			return None
-		return self._pickle_source(self.get_filename(source), source)
+		return (
+			self._pickle_source(self.get_filename(source), source)
+			if self.should_use_cache()
+			else None
+		)
 	def _pickle_source(self, pickle_file, source):
 		"""
 		When writing to a file, use pickle.dumps()
@@ -199,14 +201,14 @@ class SourceDataPickler (pretty.OutputMixin):
 		return config.save_config_file(filename)
 
 	@classmethod
-	def source_has_config(self, source):
+	def source_has_config(cls, source):
 		return getattr(source, "config_save_name", None)
 
 	def load_source(self, source):
-		data = self._load_data(self.get_filename(source))
-		if not data:
+		if data := self._load_data(self.get_filename(source)):
+			source.config_restore(data)
+		else:
 			return True
-		source.config_restore(data)
 
 	def _load_data(self, pickle_file):
 		try:
@@ -301,9 +303,8 @@ class SourceController (pretty.OutputMixin):
 		pretty.print_debug(__name__, "Remove", repr(src))
 
 	def get_plugin_id_for_object(self, obj):
-		id_ = self.plugin_object_map.get(obj)
 		#self.output_debug("Object", repr(obj), "has id", id_, id(obj))
-		return id_
+		return self.plugin_object_map.get(obj)
 
 	def remove_objects_for_plugin_id(self, plugin_id):
 		"""Remove all objects for @plugin_id
@@ -377,13 +378,13 @@ class SourceController (pretty.OutputMixin):
 			else:
 				names[name] = action
 		for action in renames:
-			self.output_debug("Disambiguate Action %s" % (action, ))
-			action.name += " (%s)" % (type(action).__module__.split(".")[-1],)
+			self.output_debug(f"Disambiguate Action {action}")
+			action.name += f' ({type(action).__module__.split(".")[-1]})'
 
 	def __contains__(self, src):
 		return src in self.sources
 	def __getitem__(self, src):
-		if not src in self:
+		if src not in self:
 			raise KeyError
 		for s in self.sources:
 			if s == src:
@@ -413,8 +414,7 @@ class SourceController (pretty.OutputMixin):
 		sourceindex.add(kupfer_sources)
 		# Make sure firstlevel is ordered
 		# So that it keeps the ordering.. SourcesSource first
-		firstlevel = []
-		firstlevel.append(sources.SourcesSource(sourceindex))
+		firstlevel = [sources.SourcesSource(sourceindex)]
 		firstlevel.extend(set(self.toplevel_sources))
 		self._pre_root = firstlevel
 		return firstlevel
@@ -440,23 +440,23 @@ class SourceController (pretty.OutputMixin):
 			to one in the set of types we want
 		"""
 		types = tuple(types)
-		firstlevel = set()
 		# include the Catalog index since we want to include
 		# the top of the catalogs (like $HOME)
 		catalog_index = (sources.SourcesSource(self.sources), )
-		for s in itertools.chain(self.sources, catalog_index):
-			if self.good_source_for_types(s, types):
-				firstlevel.add(s)
+		firstlevel = {
+			s
+			for s in itertools.chain(self.sources, catalog_index)
+			if self.good_source_for_types(s, types)
+		}
+
 		return sources.MultiSource(firstlevel)
 
 	def get_canonical_source(self, source):
 		"Return the canonical instance for @source"
-		# check if we already have source, then return that
 		if source in self:
 			return self[source]
-		else:
-			source.initialize()
-			return source
+		source.initialize()
+		return source
 
 	def get_contents_for_leaf(self, leaf, types=None):
 		"""Iterator of content sources for @leaf,
@@ -465,8 +465,7 @@ class SourceController (pretty.OutputMixin):
 			if not isinstance(leaf, typ):
 				continue
 			for content in self.content_decorators[typ]:
-				dsrc = content.decorate_item(leaf)
-				if dsrc:
+				if dsrc := content.decorate_item(leaf):
 					if types and not self.good_source_for_types(dsrc, types):
 						continue
 					yield self.get_canonical_source(dsrc)
@@ -474,11 +473,9 @@ class SourceController (pretty.OutputMixin):
 	def get_actions_for_leaf(self, leaf):
 		for typ in self.action_decorators:
 			if isinstance(leaf, typ):
-				for act in self.action_decorators[typ]:
-					yield act
+				yield from self.action_decorators[typ]
 		for agenerator in self.action_generators:
-			for action in agenerator.get_actions_for_leaf(leaf):
-				yield action
+			yield from agenerator.get_actions_for_leaf(leaf)
 
 	def decorate_object(self, obj, action=None):
 		if hasattr(obj, "has_content"):
@@ -516,7 +513,7 @@ class SourceController (pretty.OutputMixin):
 				self._save_source(source, pickler=configsaver)
 
 	@classmethod
-	def _save_source(self, source, pickler=None):
+	def _save_source(cls, source, pickler=None):
 		configsaver = pickler or SourceDataPickler()
 		configsaver.save_source(source)
 
@@ -538,7 +535,7 @@ class SourceController (pretty.OutputMixin):
 			self._pickle_source(source, pickler=sourcepickler)
 
 	@classmethod
-	def _pickle_source(self, source, pickler=None):
+	def _pickle_source(cls, source, pickler=None):
 		sourcepickler = pickler or SourcePickler()
 		sourcepickler.pickle_source(source)
 

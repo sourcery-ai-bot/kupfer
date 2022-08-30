@@ -46,8 +46,9 @@ def ask_user_credentials(user=None, password=None):
 	(user, password) when user press "change"
 	None when user press "cancel" button '''
 	dialog = CredentialsDialogController(user, password)
-	result = None
-	if dialog.show() == gtk.RESPONSE_ACCEPT:
-		result = dialog.username, dialog.password
-	return result
+	return (
+		(dialog.username, dialog.password)
+		if dialog.show() == gtk.RESPONSE_ACCEPT
+		else None
+	)
 

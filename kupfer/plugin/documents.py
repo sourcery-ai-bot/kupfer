@@ -45,8 +45,7 @@ class RecentsSource (Source):
 	def get_items(self):
 		max_days = __kupfer_settings__["max_days"]
 		self.output_info("Items younger than", max_days, "days")
-		items = self._get_items(max_days)
-		return items
+		return self._get_items(max_days)
 
 	@classmethod
 	def _get_items(cls, max_days, for_application_named=None):
@@ -97,8 +96,7 @@ class ApplicationRecentsSource (RecentsSource):
 		app_name = svc.application_name(self.application.get_id())
 		max_days = -1
 		self.output_info("Items for", app_name)
-		items = self._get_items(max_days, app_name)
-		return items
+		return self._get_items(max_days, app_name)
 
 	@classmethod
 	def has_items_for_application(cls, name):
@@ -138,9 +136,7 @@ class PlacesSource (Source):
 		file:///path/to/that.end [title]
 		"""
 		fileloc = path.expanduser(self.places_file)
-		if not path.exists(fileloc):
-			return ()
-		return self._get_places(fileloc)
+		return self._get_places(fileloc) if path.exists(fileloc) else ()
 
 	def _get_places(self, fileloc):
 		for line in open(fileloc):
@@ -154,8 +150,7 @@ class PlacesSource (Source):
 			else:
 				disp = gfile.get_parse_name()
 				title =	path.basename(disp)
-			locpath = gfile.get_path()
-			if locpath:
+			if locpath := gfile.get_path():
 				yield FileLeaf(locpath, title)
 			else:
 				yield UrlLeaf(gfile.get_uri(), title)

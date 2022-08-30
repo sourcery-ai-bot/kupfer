@@ -31,7 +31,6 @@ def _cb_allocate(label, allocation, maxwid):
 	if maxwid == -1:
 		maxwid = 300
 	label.set_size_request(min(maxwid, allocation.width), -1)
-	pass
 
 def wrapped_label(text=None, maxwid=-1):
 	label = gtk.Label(text)
@@ -249,7 +248,7 @@ class PreferencesWindowController (pretty.OutputMixin):
 			self.add_directory_model(d, store=False)
 
 	def add_directory_model(self, d, store=False):
-		have = list(os.path.normpath(row[0]) for row in self.dir_store)
+		have = [os.path.normpath(row[0]) for row in self.dir_store]
 		if d in have:
 			self.output_debug("Ignoring duplicate directory: ", d)
 			return
@@ -269,7 +268,7 @@ class PreferencesWindowController (pretty.OutputMixin):
 		dirpath = self.dir_store.get_value(rowiter, 0)
 		self.dir_store.remove(rowiter)
 		if store:
-			have = list(os.path.normpath(row[0]) for row in self.dir_store)
+			have = [os.path.normpath(row[0]) for row in self.dir_store]
 			setctl = settings.GetSettingsController()
 			setctl.set_directories(have)
 
@@ -322,8 +321,7 @@ class PreferencesWindowController (pretty.OutputMixin):
 		pass
 
 	def on_buttonkeybinding_clicked(self, widget):
-		keystr = getkey_dialog.ask_for_key(keybindings.bind_key)
-		if keystr:
+		if keystr := getkey_dialog.ask_for_key(keybindings.bind_key):
 			self.entrykeybinding.set_text(keystr)
 			self.output_debug("Try set keybinding with", keystr)
 			succ = keybindings.bind_key(keystr)
@@ -354,7 +352,7 @@ class PreferencesWindowController (pretty.OutputMixin):
 			name = info["localized_name"]
 			folded_name = kupferstring.tofolded(name)
 			desc = info["description"]
-			text = u"%s" % name
+			text = f"{name}"
 
 			if us_filter:
 				name_score = relevance.score(name, us_filter)
@@ -385,8 +383,7 @@ class PreferencesWindowController (pretty.OutputMixin):
 	def _id_for_table_path(self, path):
 		it = self.store.get_iter(path)
 		id_col = self.columns.index("plugin_id")
-		plugin_id = self.store.get_value(it, id_col)
-		return plugin_id
+		return self.store.get_value(it, id_col)
 
 	def _table_path_for_id(self, id_):
 		"""
@@ -397,14 +394,13 @@ class PreferencesWindowController (pretty.OutputMixin):
 			plugin_id = row[id_col]
 			if plugin_id == id_:
 				return row.path
-		raise ValueError("No such plugin %s" % id_)
+		raise ValueError(f"No such plugin {id_}")
 
 
 	def _plugin_info_for_id(self, plugin_id):
-		for info in self.plugin_info:
-			if info["name"] == plugin_id:
-				return info
-		return None
+		return next(
+			(info for info in self.plugin_info if info["name"] == plugin_id), None
+		)
 
 	def plugin_table_cursor_changed(self, table):
 		curpath, curcol = table.get_cursor()
@@ -420,7 +416,7 @@ class PreferencesWindowController (pretty.OutputMixin):
 		info = self._plugin_info_for_id(plugin_id)
 		title_label = gtk.Label()
 		m_localized_name = gobject.markup_escape_text(info["localized_name"])
-		title_label.set_markup(u"<b><big>%s</big></b>" % m_localized_name)
+		title_label.set_markup(f"<b><big>{m_localized_name}</big></b>")
 		version, description, author = plugins.get_plugin_attributes(plugin_id,
 				( "__version__", "__description__", "__author__", ))
 		about.pack_start(title_label, False)
@@ -433,18 +429,18 @@ class PreferencesWindowController (pretty.OutputMixin):
 				continue
 			label = gtk.Label()
 			label.set_alignment(0, 0)
-			label.set_markup(u"<b>%s</b>" % field)
+			label.set_markup(f"<b>{field}</b>")
 			infobox.pack_start(label, False)
 			label = wrapped_label()
 			label.set_alignment(0, 0)
-			label.set_markup(u"%s" % gobject.markup_escape_text(val))
+			label.set_markup(f"{gobject.markup_escape_text(val)}")
 			label.set_selectable(True)
 			infobox.pack_start(label, False)
 		if version:
 			label = wrapped_label()
 			label.set_alignment(0, 0)
 			m_version = gobject.markup_escape_text(version)
-			label.set_markup(u"<b>%s:</b> %s" % (_("Version"), m_version))
+			label.set_markup(f'<b>{_("Version")}:</b> {m_version}')
 			label.set_selectable(True)
 			infobox.pack_start(label, False)
 		about.pack_start(infobox, False)
@@ -476,17 +472,15 @@ class PreferencesWindowController (pretty.OutputMixin):
 		elif not plugins.is_plugin_loaded(plugin_id):
 			label = gtk.Label()
 			label.set_alignment(0, 0)
-			label.set_text(u"(%s)" % _("disabled"))
+			label.set_text(f'({_("disabled")})')
 			about.pack_start(label, False)
 
 		wid = self._make_plugin_info_widget(plugin_id)
 		about.pack_start(wid, False)
-		psettings_wid = self._make_plugin_settings_widget(plugin_id)
-		if psettings_wid:
+		if psettings_wid := self._make_plugin_settings_widget(plugin_id):
 			about.pack_start(psettings_wid, False)
 
-		oldch = self.plugin_about_parent.get_child()
-		if oldch:
+		if oldch := self.plugin_about_parent.get_child():
 			self.plugin_about_parent.remove(oldch)
 		vp = gtk.Viewport()
 		vp.set_shadow_type(gtk.SHADOW_NONE)
@@ -496,19 +490,18 @@ class PreferencesWindowController (pretty.OutputMixin):
 
 	def _make_plugin_info_widget(self, plugin_id):
 		sources, actions, text_sources = \
-				plugins.get_plugin_attributes(plugin_id, (
+					plugins.get_plugin_attributes(plugin_id, (
 				plugins.sources_attribute,
 				plugins.action_decorators_attribute,
 				plugins.text_sources_attribute)
 				)
-		all_items = list()
+		all_items = []
 		vbox = gtk.VBox()
 		vbox.set_property("spacing", 5)
 
 		def make_objects_frame(objs, title):
 			frame_label = gtk.Label()
-			frame_label.set_markup(u"<b>%s</b>" %
-			                       gobject.markup_escape_text(title))
+			frame_label.set_markup(f"<b>{gobject.markup_escape_text(title)}</b>")
 			frame_label.set_alignment(0, 0)
 			objvbox = gtk.VBox()
 			objvbox.pack_start(frame_label, False)
@@ -529,9 +522,10 @@ class PreferencesWindowController (pretty.OutputMixin):
 				hbox.pack_start(im, False)
 				m_name = gobject.markup_escape_text(name)
 				m_desc = gobject.markup_escape_text(desc)
-				name_label = \
-					u"%s\n<small>%s</small>" % (m_name, m_desc) if m_desc else \
-					u"%s" % (m_name, )
+				name_label = (
+					u"%s\n<small>%s</small>" % (m_name, m_desc) if m_desc else f"{m_name}"
+				)
+
 				label = wrapped_label()
 				label.set_markup(name_label)
 				hbox.pack_start(label, False)
@@ -602,7 +596,7 @@ class PreferencesWindowController (pretty.OutputMixin):
 		info = self._plugin_info_for_id(plugin_id)
 		title_label = gtk.Label()
 		# TRANS: Plugin-specific configuration (header)
-		title_label.set_markup(u"<b>%s</b>" % _("Configuration"))
+		title_label.set_markup(f'<b>{_("Configuration")}</b>')
 		title_label.set_alignment(0, 0)
 
 		vbox = gtk.VBox()
@@ -772,15 +766,13 @@ class PreferencesWindowController (pretty.OutputMixin):
 
 	def on_terminal_combobox_changed(self, widget):
 		setctl = settings.GetSettingsController()
-		itr = widget.get_active_iter()
-		if itr:
+		if itr := widget.get_active_iter():
 			term_id = widget.get_model().get_value(itr, 1)
 			setctl.set_preferred_tool('terminal', term_id)
 
 	def on_icons_combobox_changed(self, widget):
 		setctl = settings.GetSettingsController()
-		itr = widget.get_active_iter()
-		if itr:
+		if itr := widget.get_active_iter():
 			term_id = widget.get_model().get_value(itr, 1)
 			setctl.set_preferred_tool('icon_renderer', term_id)
 

@@ -35,14 +35,10 @@ class FavoritesSource (Source):
 
 	def _lookup_item(self, id_):
 		itm = puid.resolve_unique_id(id_, excluding=self)
-		if itm is None:
-			return None
-		return itm
+		return None if itm is None else itm
 
 	def _valid_item(self,  itm):
-		if hasattr(itm, "is_valid") and not itm.is_valid():
-			return False
-		return True
+		return bool(not hasattr(itm, "is_valid") or itm.is_valid())
 
 	def _find_item(self, id_):
 		itm = self._lookup_item(id_)

@@ -42,7 +42,7 @@ def get_playlist_songs():
 			stdout=subprocess.PIPE)
 	stdout, stderr = toolProc.communicate()
 	for line in stdout.splitlines():
-		if not line.count('|') >= 2:
+		if line.count('|') < 2:
 			continue
 		position, rest = line.split('|', 1)
 		songname, rest = rest.rsplit('|', 1)
@@ -189,7 +189,7 @@ class AudaciousSource (AppLeafContentMixin, Source):
 		yield Play()
 		yield Pause()
 		yield Next()
-		yield Previous() 
+		yield Previous()
 		yield ClearQueue()
 		# Commented as these seem to have no effect
 		#yield Shuffle()
@@ -198,8 +198,7 @@ class AudaciousSource (AppLeafContentMixin, Source):
 		songs_source = AudaciousSongsSource(songs)
 		yield SourceLeaf(songs_source)
 		if __kupfer_settings__["playlist_toplevel"]:
-			for leaf in songs_source.get_leaves():
-				yield leaf
+			yield from songs_source.get_leaves()
 	def get_description(self):
 		return __description__
 	def get_icon_name(self):

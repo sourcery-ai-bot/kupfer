@@ -14,7 +14,7 @@ from HTMLParser import HTMLParser
  
 def get_firefox_home_file(needed_file):
     for firefox_dir in (os.path.expanduser(p) for p in
-			("~/.mozilla/firefox-3.5/", "~/.mozilla/firefox/")):
+    ("~/.mozilla/firefox-3.5/", "~/.mozilla/firefox/")):
         if os.path.exists(firefox_dir):
             break
     else:
@@ -29,10 +29,10 @@ def get_firefox_home_file(needed_file):
         if config.has_option(section, "Default") and config.get(section, "Default") == "1":
             path = config.get (section, "Path")
             break
-        elif path == None and config.has_option(section, "Path"):
+        elif path is None and config.has_option(section, "Path"):
             path = config.get (section, "Path")
-        
-    if path == None:
+
+    if path is None:
         return ""
 
     if path.startswith("/"):
@@ -77,19 +77,16 @@ class BookmarksParser(HTMLParser):
 		return text
 
 	def handle_starttag(self, tag, attrs):
-		if tag == "a":
-			self.inA = True
-			for attr in attrs:
-				if attr[0] == "href":
-					self.href = attr[1]
-					
+	    if tag == "a":
+	    	self.inA = True
+	    	for attr in attrs:
+	    		if attr[0] == "href":
+	    			self.href = attr[1]
 
-		if tag == "h3":
-			self.inH3 = True
-			self.tagCount += 1
 
-		if tag == "dl":
-			pass
+	    if tag == "h3":
+	    	self.inH3 = True
+	    	self.tagCount += 1
 			#print "Entering folder list; tags are", self.tags
 
 	def handle_endtag(self, tag):

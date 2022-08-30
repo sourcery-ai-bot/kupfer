@@ -47,7 +47,7 @@ class Help (object):
 				continue
 			val = environment[attr]
 			if not callable(val):
-				docstrings.append(u"%s = %s" % (attr, val))
+				docstrings.append(f"{attr} = {val}")
 				continue
 			try:
 				docstrings.append(val.__doc__)
@@ -74,8 +74,7 @@ class Help (object):
 
 def make_environment(last_result=None):
 	"Return a namespace for the calculator's expressions to be executed in."
-	environment = dict(vars(math))
-	environment.update(vars(cmath))
+	environment = vars(math) | vars(cmath)
 	# define some constants missing
 	if last_result is not None:
 		environment["_"] = last_result
@@ -89,10 +88,10 @@ def format_result(res):
 	cres = complex(res)
 	parts = []
 	if cres.real:
-		parts.append(u"%s" % cres.real)
+		parts.append(f"{cres.real}")
 	if cres.imag:
-		parts.append(u"%s" % complex(0, cres.imag))
-	return u"+".join(parts) or u"%s" % res
+		parts.append(f"{complex(0, cres.imag)}")
+	return u"+".join(parts) or f"{res}"
 
 class Calculate (Action):
 	# since it applies only to special queries, we can up the rank

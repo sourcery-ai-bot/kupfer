@@ -39,7 +39,7 @@ class HostServiceLeaf(HostLeaf):
 			HOST_SERVICE_PASS_KEY: password,
 		}
 		if slots:
-			_slots.update(slots)
+			_slots |= slots
 		HostLeaf.__init__(self, _slots, name or address)
 		self._description = description
 

@@ -150,9 +150,7 @@ def _good_destination(dpath, spath):
 	spath = os.path.normpath(spath)
 	dpath = os.path.normpath(dpath)
 	cpfx = os.path.commonprefix((spath, dpath))
-	if os.path.samefile(dpath, spath) or cpfx == spath:
-		return False
-	return True
+	return not os.path.samefile(dpath, spath) and cpfx != spath
 
 def path_to_uri(filepath):
 	return gio.File(filepath).get_uri()

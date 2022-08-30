@@ -74,9 +74,7 @@ def _good_destination(dpath, spath):
 	if not os.access(dpath, os.R_OK | os.W_OK | os.X_OK):
 		return False
 	cpfx = os_path.commonprefix((spath, dpath))
-	if os_path.samefile(dpath, spath) or cpfx == spath:
-		return False
-	return True
+	return not os_path.samefile(dpath, spath) and cpfx != spath
 
 def _good_destination_final(dpath, spath):
 	"""Perform a final check that the file @spath can
@@ -86,7 +84,7 @@ def _good_destination_final(dpath, spath):
 	if os_path.exists(dest_filename):
 		return False
 	parent_spath = os_path.dirname(spath)
-	return not (dpath == parent_spath)
+	return dpath != parent_spath
 
 class MoveTo (Action, pretty.OutputMixin):
 	def __init__(self):
@@ -240,8 +238,16 @@ class CopyTo (Action, pretty.OutputMixin):
 class UnpackHere (Action):
 	def __init__(self):
 		Action.__init__(self, _("Extract Here"))
-		self.extensions_set = set((".rar", ".7z", ".zip", ".gz", ".tgz",
-			".tar", ".lzma", ".bz2"))
+		self.extensions_set = {
+			".rar",
+			".7z",
+			".zip",
+			".gz",
+			".tgz",
+			".tar",
+			".lzma",
+			".bz2",
+		}
 	def activate(self, leaf):
 		utils.spawn_async_notify_as("file-roller.desktop",
 				["file-roller", "--extract-here", leaf.object])
@@ -286,8 +292,8 @@ class CreateArchiveIn (Action):
 	def _make_archive(cls, basename, dirpath, filepaths):
 		archive_type = __kupfer_settings__["archive_type"]
 		archive_path = \
-			utils.get_destpath_in_directory(dirpath, basename, archive_type)
-		cmd = ["file-roller", "--add-to=%s" % (archive_path, )]
+				utils.get_destpath_in_directory(dirpath, basename, archive_type)
+		cmd = ["file-roller", f"--add-to={archive_path}"]
 		cmd.extend(filepaths)
 		runtimehelper.register_async_file_result(archive_path)
 		utils.spawn_async_notify_as("file-roller.desktop", cmd)

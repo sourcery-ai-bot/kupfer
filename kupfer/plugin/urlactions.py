@@ -45,7 +45,7 @@ class DownloadTask (task.ThreadTask):
 			(self.destfile, self.destpath) = utils.get_safe_tempfile()
 		else:
 			(self.destfile, self.destpath) = \
-				utils.get_destfile_in_directory(self.destdir, destname)
+					utils.get_destfile_in_directory(self.destdir, destname)
 		try:
 			if not self.destfile:
 				raise IOError("Could not write output file")

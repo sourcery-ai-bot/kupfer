@@ -45,20 +45,18 @@ class OpeninFilezilla(Action):
 		if isinstance(leaf, (UrlLeaf, TextLeaf)):
 			utils.spawn_async(['filezilla', leaf.object])
 		elif leaf.check_key(FILEZILLA_SITE_KEY):
-			sessname = leaf.entry_type + '/' + leaf[hosts.HOST_NAME_KEY]
+			sessname = f'{leaf.entry_type}/{leaf[hosts.HOST_NAME_KEY]}'
 			utils.spawn_async(['filezilla', '-c', sessname])
 		else:
 			url = ['ftp://']
 			if leaf.check_key(hosts.HOST_SERVICE_USER_KEY):
 				url.append(leaf[hosts.HOST_SERVICE_USER_KEY])
 				if leaf.check_key(hosts.HOST_SERVICE_PASS_KEY):
-					url.append(':')
-					url.append(leaf[hosts.HOST_SERVICE_PASS_KEY])
+					url.extend((':', leaf[hosts.HOST_SERVICE_PASS_KEY]))
 				url.append('@')
 			url.append(leaf[hosts.HOST_ADDRESS_KEY])
 			if leaf.check_key(hosts.HOST_SERVICE_PORT_KEY):
-				url.append(':')
-				url.append(leaf[hosts.HOST_SERVICE_PORT_KEY])
+				url.extend((':', leaf[hosts.HOST_SERVICE_PORT_KEY]))
 			if leaf.check_key(hosts.HOST_SERVICE_REMOTE_PATH_KEY):
 				url.append(leaf[hosts.HOST_SERVICE_REMOTE_PATH_KEY])
 			utils.spawn_async(['filezilla', ''.join(url)])
@@ -74,9 +72,11 @@ class OpeninFilezilla(Action):
 	def valid_for_item(self, item):
 		if isinstance(item, (UrlLeaf, TextLeaf)):
 			return item.object.startswith('ftp')
-		if item.check_key(hosts.HOST_SERVICE_NAME_KEY):
-			if item[hosts.HOST_SERVICE_NAME_KEY] == 'ftp':
-				return True
+		if (
+			item.check_key(hosts.HOST_SERVICE_NAME_KEY)
+			and item[hosts.HOST_SERVICE_NAME_KEY] == 'ftp'
+		):
+			return True
 		return item.check_key(FILEZILLA_SITE_KEY)
 
 
@@ -132,6 +132,4 @@ def get_xml_element_text(node, tag):
 	'''Find @tag in childs of @node and return text from it.
 	If @tag is not found - return None'''
 	child = node.find(tag)
-	if child is None:
-		return None
-	return child.text
+	return None if child is None else child.text

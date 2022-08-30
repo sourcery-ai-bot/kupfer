@@ -107,7 +107,7 @@ class SystemServicesSource(Source, FilesystemWatchMixin):
 
 
 	def monitor_include_file(self, gfile):
-		return gfile and not gfile.get_basename() in _SERVICES_BLACK_LIST
+		return gfile and gfile.get_basename() not in _SERVICES_BLACK_LIST
 
 	def get_items(self):
 		if self._initd_path is None:
@@ -115,8 +115,8 @@ class SystemServicesSource(Source, FilesystemWatchMixin):
 
 		for filename in os.listdir(self._initd_path):
 			if (filename in _SERVICES_BLACK_LIST \
-					or filename.find('dpkg-') > 0 or filename.endswith('~') \
-					or filename.startswith('.')):
+						or filename.find('dpkg-') > 0 or filename.endswith('~') \
+						or filename.startswith('.')):
 				continue
 
 			file_path = os.path.join(self._initd_path, filename)

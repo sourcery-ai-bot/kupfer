@@ -80,13 +80,16 @@ def formatCommonSubstrings(s, query, format_clean=None, format_match=None):
     tail = s[last:]
 
     # we use s[0:0], which is "" or u""
-    return s[0:0].join((
+    return s[:0].join(
+        (
             format(head),
             format_match(match),
-            formatCommonSubstrings(matchtail, nextkey,
-                                   format_clean, format_match),
+            formatCommonSubstrings(
+                matchtail, nextkey, format_clean, format_match
+            ),
             format(tail),
-            ))
+        )
+    )
 
 def score(s, query):
     """
@@ -135,14 +138,14 @@ def score(s, query):
                 firstCount += 1
             else:
                 bad += 1
-    
+
     # A first character match counts extra
     if query[0] == ls[0]:
         firstCount += 2
-        
+
     # The longer the acronym, the better it scores
     good += firstCount * firstCount * 4
-    
+
     # Better yet if the match itself started there
     if first == 0:
         good += 2
@@ -156,12 +159,8 @@ def score(s, query):
     # This fix makes sure that perfect matches always rank higher
     # than split matches.  Perfect matches get the .9 - 1.0 range
     # everything else lower
-    
-    if last - first == len(query):
-        score = .9 + .1 * score
-    else:
-        score = .9 * score
-    
+
+    score = .9 + .1 * score if last - first == len(query) else .9 * score
     return score
 
 def _findBestMatch(s, query):
@@ -183,11 +182,11 @@ def _findBestMatch(s, query):
     (-1, -1)
     """
     bestMatch = -1, -1
-    
+
     # Find the last instance of the last character of the query
     # since we never need to search beyond that
     lastChar = s.rfind(query[-1])
-    
+
     # No instance of the character?
     if lastChar == -1:
         return bestMatch
@@ -201,16 +200,13 @@ def _findBestMatch(s, query):
         # See if we can fit the whole query in the tail
         # We know the first char matches, so we dont check it.
         cur = index + 1
-        qcur = 1
-        while qcur < queryLength:
+        for qcur in range(1, queryLength):
             # find where in the string the next query character is
             # if not found, we are done
             cur = s.find(query[qcur], cur, lastChar + 1)
             if cur == -1:
                 return bestMatch
             cur += 1
-            qcur += 1
-
         # take match if it is shorter
         # if perfect match, we are done
         if bestMatch[0] == -1 or (cur - index) < (bestMatch[1] - bestMatch[0]):

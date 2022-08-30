@@ -32,10 +32,12 @@ def get_bookmarks(bookmarks_file):
 
 	def is_container(ch):
 		return ch["type"] == CONTAINER
+
 	def is_bookmark(ch):
 		return ch.get("url")
+
 	def is_good(ch):
-		return not ch["url"].split(":", 1)[0] in UNWANTED_SCHEME
+		return ch["url"].split(":", 1)[0] not in UNWANTED_SCHEME
 
 	folders = []
 

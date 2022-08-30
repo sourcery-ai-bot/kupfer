@@ -115,7 +115,7 @@ class AsyncCommand (object):
 
 		flags = (glib.SPAWN_SEARCH_PATH | glib.SPAWN_DO_NOT_REAP_CHILD)
 		pid, stdin_fd, stdout_fd, stderr_fd = \
-		     glib.spawn_async(argv, standard_output=True, standard_input=True,
+			     glib.spawn_async(argv, standard_output=True, standard_input=True,
 		                      standard_error=True, flags=flags)
 
 		if stdin:
@@ -136,10 +136,7 @@ class AsyncCommand (object):
 
 	def _split_string(self, s, length):
 		"""Split @s in pieces of @length"""
-		L = []
-		for i in xrange(0, len(s)//length + 1):
-			L.append(s[i*length:(i+1)*length])
-		return L
+		return [s[i*length:(i+1)*length] for i in xrange(0, len(s)//length + 1)]
 
 	def _io_callback(self, sourcefd, condition, databuf):
 		if condition & glib.IO_IN:
@@ -221,9 +218,7 @@ def launch_commandline(cli, name=None, in_terminal=False):
 	argv = desktop_parse.parse_argv(cli)
 	pretty.print_error(__name__, "Launch commandline is deprecated ")
 	pretty.print_debug(__name__, "Launch commandline (in_terminal=", in_terminal, "):", argv, sep="")
-	if in_terminal:
-		return spawn_in_terminal(argv)
-	return spawn_async(argv)
+	return spawn_in_terminal(argv) if in_terminal else spawn_async(argv)
 
 def launch_app(app_info, files=(), uris=(), paths=()):
 	from kupfer import launch
@@ -256,9 +251,11 @@ def show_url(url):
 def is_directory_writable(dpath):
 	"""If directory path @dpath is a valid destination to write new files?
 	"""
-	if not os_path.isdir(dpath):
-		return False
-	return os.access(dpath, os.R_OK | os.W_OK | os.X_OK)
+	return (
+		os.access(dpath, os.R_OK | os.W_OK | os.X_OK)
+		if os_path.isdir(dpath)
+		else False
+	)
 
 def get_destpath_in_directory(directory, filename, extension=None):
 	"""Find a good destpath for a file named @filename in path @directory
@@ -272,14 +269,9 @@ def get_destpath_in_directory(directory, filename, extension=None):
 	ctr = itertools.count(1)
 	basename = filename + (extension or "")
 	destpath = os_path.join(directory, basename)
-	while True:
-		if not os_path.exists(destpath):
-			break
-		if extension:
-			root, ext = filename, extension
-		else:
-			root, ext = os_path.splitext(filename)
-		basename = "%s-%s%s" % (root, ctr.next(), ext)
+	while os_path.exists(destpath):
+		root, ext = (filename, extension) if extension else os_path.splitext(filename)
+		basename = f"{root}-{ctr.next()}{ext}"
 		destpath = os_path.join(directory, basename)
 	return destpath
 

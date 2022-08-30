@@ -20,12 +20,13 @@ def build(bld):
 		bld(
 			features="intltool_in",
 			podir="../po",
-			flags = ("-d", "-q", "-u", "-c"),
-			source = desktop_subst_file  + ".in",
-			target = desktop_subst_file,
-			install_path = "${DATADIR}/applications",
-			chmod = 0o755,
+			flags=("-d", "-q", "-u", "-c"),
+			source=f"{desktop_subst_file}.in",
+			target=desktop_subst_file,
+			install_path="${DATADIR}/applications",
+			chmod=0o755,
 		)
+
 
 	install_desktop_file("kupfer.desktop")
 	install_desktop_file("kupfer-exec.desktop")
@@ -36,11 +37,12 @@ def build(bld):
 	bld(
 		features="intltool_in",
 		podir="../po",
-		flags = ("-x", "-q", "-u", "-c"),
-		source = mimetypes_file  + ".in",
-		target = mimetypes_file,
-		install_path = "${DATADIR}/mime/packages/",
+		flags=("-x", "-q", "-u", "-c"),
+		source=f"{mimetypes_file}.in",
+		target=mimetypes_file,
+		install_path="${DATADIR}/mime/packages/",
 	)
+
 
 	if bld.is_install and bld.env["AUXDATA_MIME"]:
 		bld.exec_command(["update-mime-database",
@@ -56,8 +58,8 @@ def build(bld):
 		icon_dir = Utils.subst_vars('${DATADIR}/icons/hicolor', bld.env)
 		if not Options.options.destdir:
 			Logs.pprint('GREEN',"Updating Gtk icon cache.")
-			command='gtk-update-icon-cache -q -f -t %s' % icon_dir
+			command = f'gtk-update-icon-cache -q -f -t {icon_dir}'
 			bld.exec_command(command)
 		else:
 			Logs.pprint('YELLOW','Icon cache not updated. After install, run this:')
-			Logs.pprint('YELLOW','gtk-update-icon-cache -q -f -t %s'%icon_dir)
+			Logs.pprint('YELLOW', f'gtk-update-icon-cache -q -f -t {icon_dir}')

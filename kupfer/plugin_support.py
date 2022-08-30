@@ -52,11 +52,11 @@ class PluginSettings (gobject.GObject, pretty.OutputMixin):
 		gobject.GObject.__init__(self)
 		self.setting_descriptions = {}
 		self.setting_key_order = []
-		req_keys = set(("key", "value", "type", "label"))
+		req_keys = {"key", "value", "type", "label"}
 		for desc in setdescs:
 			if not req_keys.issubset(desc.keys()):
 				missing = req_keys.difference(desc.keys())
-				raise KeyError("Plugin setting missing keys: %s" % missing)
+				raise KeyError(f"Plugin setting missing keys: {missing}")
 			self.setting_descriptions[desc["key"]] = dict(desc)
 			self.setting_key_order.append(desc["key"])
 
@@ -246,18 +246,16 @@ def register_alternative(caller, category_key, id_, **kwargs):
 				"Category '%s' does not exist" % category_key)
 		return
 	alt = _available_alternatives[category_key]
-	id_ = caller + "." + id_
+	id_ = f"{caller}.{id_}"
 	kw_set = set(kwargs)
 	req_set = set(alt["required_keys"])
 	if not req_set.issubset(kw_set):
 		_plugin_configuration_error(caller,
 			"Configuration error for alternative '%s':" % category_key)
-		_plugin_configuration_error(caller, "Missing keys: %s" %
-				(req_set - kw_set))
+		_plugin_configuration_error(caller, f"Missing keys: {req_set - kw_set}")
 		return
 	_alternatives[category_key][id_] = kwargs
-	pretty.print_debug(__name__,
-		"Registered alternative %s: %s" % (category_key, id_))
+	pretty.print_debug(__name__, f"Registered alternative {category_key}: {id_}")
 	setctl = settings.GetSettingsController()
 	setctl._update_alternatives(category_key, _alternatives[category_key],
 	                            alt["filter"])
@@ -286,8 +284,7 @@ def _unregister_alternative(caller, category_key, full_id_):
 		_plugin_configuration_error(caller,
 				"Alternative '%s' does not exist" % (id_, ))
 		return
-	pretty.print_debug(__name__,
-		"Unregistered alternative %s: %s" % (category_key, id_))
+	pretty.print_debug(__name__, f"Unregistered alternative {category_key}: {id_}")
 	setctl = settings.GetSettingsController()
 	setctl._update_alternatives(category_key, _alternatives[category_key],
 	                            alt["filter"])

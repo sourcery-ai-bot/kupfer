@@ -36,9 +36,10 @@ class OpenSession(Action):
 		Action.__init__(self, _("Open"))
 
 	def activate(self, leaf):
-		utils.spawn_async(["gnome-terminal",
-				   "--profile=%s" % leaf.object],
-				  in_dir=os.path.expanduser("~"))
+		utils.spawn_async(
+			["gnome-terminal", f"--profile={leaf.object}"],
+			in_dir=os.path.expanduser("~"),
+		)
 
 	def get_gicon(self):
 		return icons.ComposedIcon("gtk-execute", "terminal")

@@ -14,12 +14,12 @@ def parse_epiphany_bookmarks(filename):
 	"""
 	Yield a sequence of bookmarks
 	"""
-	UNWANTED_SCHEME = set(("data", "javascript"))
+	UNWANTED_SCHEME = {"data", "javascript"}
 
 	ns = u"{http://purl.org/rss/1.0/}"
-	ITEM_NAME = ns + "item"
-	HREF_NAME = ns + "link"
-	TITLE_NAME = ns + "title"
+	ITEM_NAME = f"{ns}item"
+	HREF_NAME = f"{ns}link"
+	TITLE_NAME = f"{ns}title"
 
 	def get_item(entry):
 		"""Return a bookmarks item or None if not good"""

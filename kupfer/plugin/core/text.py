@@ -60,10 +60,7 @@ def is_url(text):
 		len(dotparts) >= 2 and len(dotparts[-1]) >= 2 and
 		any(char.isalpha() for char in domain) and
 		all(part[:1].isalnum() for part in dotparts))):
-		if not components[0]:
-			url = "http://" + "".join(components[1:])
-		else:
-			url = text
+		url = text if components[0] else "http://" + "".join(components[1:])
 		name = ("".join(components[1:3])).strip("/")
 		if name:
 			return url

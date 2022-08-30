@@ -194,10 +194,10 @@ def show_notification(title, text="", icon_name="", nid=0):
 	Returns the id of the displayed notification.
 	"""
 	notifications = _get_notification_iface()
-	if not notifications:
-		return None
-	rid = notifications.Notify("kupfer",
-	                           nid, icon_name, title, text, (), {}, -1)
-	return rid
+	return (
+		notifications.Notify("kupfer", nid, icon_name, title, text, (), {}, -1)
+		if notifications
+		else None
+	)
 
 

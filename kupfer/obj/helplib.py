@@ -70,8 +70,7 @@ class FilesystemWatchMixin (object):
 			gfile = gio.File(directory)
 			if not gfile.query_exists():
 				continue
-			monitor = gfile.monitor_directory(gio.FILE_MONITOR_NONE, None)
-			if monitor:
+			if monitor := gfile.monitor_directory(gio.FILE_MONITOR_NONE, None):
 				monitor.connect("changed", self.__directory_changed)
 				tokens.append(monitor)
 		return NonpersistentToken(tokens)
@@ -123,6 +122,6 @@ def reverse_action(action, rank=0):
 			return action.valid_for_item(self, obj)
 		def object_source(self, for_item=None):
 			return None
-	ReverseAction.__name__ = "Reverse" + action.__name__
+	ReverseAction.__name__ = f"Reverse{action.__name__}"
 	return ReverseAction
 

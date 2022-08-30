@@ -13,62 +13,10 @@ import time
 
 raise ImportError("This plugin is no longer supported due to Twitter API Changes")
 
-import twitter as twitter
-
-from kupfer import icons, pretty
-from kupfer import plugin_support
-from kupfer import kupferstring
-from kupfer.objects import Action, TextLeaf, Source, SourceLeaf, TextSource
-from kupfer.obj.grouping import ToplevelGroupingSource
-from kupfer.obj.contacts import ContactLeaf, NAME_KEY
-from kupfer.obj.special import PleaseConfigureLeaf
-
-plugin_support.check_keyring_support()
-
-__kupfer_settings__ = plugin_support.PluginSettings(
-	{
-		'key': 'userpass',
-		'label': '',
-		'type': plugin_support.UserNamePassword,
-		'value': '',
-	},
-	{
-		'key': 'loadicons',
-		'label': _("Load friends' pictures"),
-		'type': bool,
-		'value': True
-	},
-	{
-		'key': 'loadtweets',
-		'label': _("Load friends' public tweets"),
-		'type': bool,
-		'value': False,
-	},
-	{
-		'key': 'loadtimeline',
-		'label': _('Load timeline'),
-		'type': bool,
-		'value': False,
-	}
-)
-
-MAX_STATUSES_COUNT = 10
-MAX_TIMELINE_STATUSES_COUNT = MAX_STATUSES_COUNT * 2
-TWITTER_USERNAME_KEY = 'twitter_username'
-
-# friends
-UPDATE_FR_INTERVAL_S = 20*60 # 15 min
-UPDATE_FR_STARTUP_S = 7 #sec
-
-# timeline
-UPDATE_TL_START_S = 13 # sec
-UPDATE_TL_INTERVAL_S = 15 * 60 # 20 min
-
 
 def get_twitter_api():
-	upass = __kupfer_settings__['userpass']
 	api = None
-	if upass:
+	if upass := __kupfer_settings__['userpass']:
 		api = twitter.Api(username=upass.username, password=upass.password)
 		api.SetXTwitterHeaders('Kupfer', '', __version__) # optional
 	return api
@@ -82,7 +30,7 @@ def send_direct_message(user, message):
 
 def trunc_message(message):
 	if len(message) > 140:
-		message = message[:139] + '…'
+		message = f'{message[:139]}…'
 	return message
 
 
@@ -196,8 +144,7 @@ class PostUpdate(Action):
 		Action.__init__(self, _('Post Update to Twitter'))
 
 	def activate(self, leaf):
-		api = get_twitter_api()
-		if api:
+		if api := get_twitter_api():
 			api.PostUpdate(trunc_message(leaf.object))
 
 	def item_types(self):

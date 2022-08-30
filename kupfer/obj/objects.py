@@ -59,7 +59,7 @@ class FileLeaf (Leaf, TextRepresentation):
 		@name: unicode name or None for using basename
 		"""
 		if obj is None:
-			raise InvalidDataError("File path for %s may not be None" % name)
+			raise InvalidDataError(f"File path for {name} may not be None")
 		# Use glib filename reading to make display name out of filenames
 		# this function returns a `unicode` object
 		if not name:
@@ -114,10 +114,7 @@ class FileLeaf (Leaf, TextRepresentation):
 	def get_gicon(self):
 		return icons.get_gicon_for_file(self.object)
 	def get_icon_name(self):
-		if self.is_dir():
-			return "folder"
-		else:
-			return "text-x-generic"
+		return "folder" if self.is_dir() else "text-x-generic"
 
 class SourceLeaf (Leaf):
 	def __init__(self, obj, name=None):
@@ -154,7 +151,7 @@ class AppLeaf (Leaf):
 		"""
 		self.init_item = item
 		self.init_path = init_path
-		self.init_item_id = app_id and app_id + ".desktop"
+		self.init_item_id = app_id and f"{app_id}.desktop"
 		# finish will raise InvalidDataError on invalid item
 		self.finish()
 		Leaf.__init__(self, self.object, self.object.get_name())
@@ -254,10 +251,10 @@ class AppLeaf (Leaf):
 		# Use Application's description, else use executable
 		# for "file-based" applications we show the path
 		app_desc = tounicode(self.object.get_description())
-		ret = tounicode(app_desc if app_desc else self.object.get_executable())
+		ret = tounicode(app_desc or self.object.get_executable())
 		if self.init_path:
 			app_path = utils.get_display_path_for_bytestring(self.init_path)
-			return u"(%s) %s" % (app_path, ret)
+			return f"({app_path}) {ret}"
 		return ret
 
 	def get_gicon(self):
@@ -309,9 +306,7 @@ class Launch (Action):
 		return _("Launch application")
 
 	def get_icon_name(self):
-		if self.is_running:
-			return "go-jump"
-		return Action.get_icon_name(self)
+		return "go-jump" if self.is_running else Action.get_icon_name(self)
 
 class LaunchAgain (Launch):
 	rank_adjust = 0
@@ -368,8 +363,7 @@ class RunnableLeaf (Leaf):
 	def repr_key(self):
 		return ""
 	def get_gicon(self):
-		iname = self.get_icon_name()
-		if iname:
+		if iname := self.get_icon_name():
 			return icons.get_gicon_with_fallbacks(None, (iname, ))
 		return icons.ComposedIcon("kupfer-object", "gtk-execute")
 	def get_icon_name(self):

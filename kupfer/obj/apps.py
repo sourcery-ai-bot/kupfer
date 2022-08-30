@@ -24,11 +24,11 @@ class AppLeafContentMixin (object):
 		return cls._cached_leaf_repr
 	@classmethod
 	def __get_appleaf_id_iter(cls):
-		if hasattr(cls.appleaf_content_id, "__iter__"):
-			ids = iter(cls.appleaf_content_id)
-		else:
-			ids = (cls.appleaf_content_id, )
-		return ids
+		return (
+			iter(cls.appleaf_content_id)
+			if hasattr(cls.appleaf_content_id, "__iter__")
+			else (cls.appleaf_content_id,)
+		)
 	@classmethod
 	def __get_leaf_repr(cls):
 		for appleaf_id in cls.__get_appleaf_id_iter():

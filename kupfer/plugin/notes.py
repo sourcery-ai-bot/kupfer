@@ -118,9 +118,7 @@ class AppendToNote (Action):
 
 def _prepare_note_text(text):
 	title, body = textutils.extract_title_body(text)
-	if body.lstrip():
-		return u"%s\n%s" % (title, body)
-	return title
+	return u"%s\n%s" % (title, body) if body.lstrip() else title
 
 class CreateNote (Action):
 	def __init__(self):
@@ -222,8 +220,10 @@ class NotesSource (ApplicationSource):
 		# We monitor all directories that exist of a couple of candidates
 		dirs = []
 		for program in PROGRAM_IDS:
-			notedatapaths = (os.path.join(base.xdg_data_home, program),
-					os.path.expanduser("~/.%s" % program))
+			notedatapaths = os.path.join(
+				base.xdg_data_home, program
+			), os.path.expanduser(f"~/.{program}")
+
 			dirs.extend(notedatapaths)
 		self.monitor_token = self.monitor_directories(*dirs)
 
@@ -245,8 +245,7 @@ class NotesSource (ApplicationSource):
 			self._notes.append((noteuri, title, date))
 
 	def get_items(self):
-		notes = _get_notes_interface()
-		if notes:
+		if notes := _get_notes_interface():
 			self._update_cache(notes)
 		for noteuri, title, date in self._notes:
 			yield Note(noteuri, title, date=date)

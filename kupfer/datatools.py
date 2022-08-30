@@ -37,9 +37,7 @@ class SavedIterable (object):
 	[0, 1, 2]
 	"""
 	def __new__(cls, iterable):
-		if isinstance(iterable, list):
-			return iterable
-		return object.__new__(cls)
+		return iterable if isinstance(iterable, list) else object.__new__(cls)
 	def __init__(self, iterable):
 		self.iterator = iter(iterable)
 		self.data = []

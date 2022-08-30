@@ -49,12 +49,12 @@ class NewMailAction(Action):
 	def activate(self, leaf):
 		email = email_from_leaf(leaf)
 
-		if not utils.spawn_async(['thunderbird', 'mailto:%s' % email]):
-			utils.spawn_async(['icedove', 'mailto:%s' % email])
-		if (not utils.spawn_async_notify_as(
-		        'thunderbird.desktop', ['thunderbird', 'mailto:%s' % email])):
-			utils.spawn_async_notify_as(
-					'icedove.desktop', ['icedove', 'mailto:%s' % email])
+		if not utils.spawn_async(['thunderbird', f'mailto:{email}']):
+			utils.spawn_async(['icedove', f'mailto:{email}'])
+		if not utils.spawn_async_notify_as(
+			'thunderbird.desktop', ['thunderbird', f'mailto:{email}']
+		):
+			utils.spawn_async_notify_as('icedove.desktop', ['icedove', f'mailto:{email}'])
 
 	def get_icon_name(self):
 		return "mail-message-new"

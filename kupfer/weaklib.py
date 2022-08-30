@@ -20,8 +20,7 @@ class WeakCallback (object):
 		self.token = None
 
 	def __call__(self, *args, **kwargs):
-		obj = self.wref()
-		if obj:
+		if obj := self.wref():
 			attr = getattr(obj, self.callback_attr)
 			attr(*args, **kwargs)
 		else:
@@ -62,8 +61,7 @@ class GobjectWeakCallback (WeakCallback):
 	__senders = {}
 
 	def object_deleted(self, wref):
-		sender = self.__senders.pop(self.token, None)
-		if sender:
+		if sender := self.__senders.pop(self.token, None):
 			sender.disconnect(self.token)
 
 	@classmethod

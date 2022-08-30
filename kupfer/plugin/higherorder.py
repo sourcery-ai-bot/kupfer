@@ -34,13 +34,10 @@ def _exec_no_show_result(composedleaf):
 	if result_type == commandexec.RESULT_OBJECT:
 		return ret
 	if result_type == commandexec.RESULT_SOURCE:
-		leaves = list(ret.get_leaves())
-		if not leaves:
-			return
-		if len(leaves) == 1:
-			return leaves[0]
+		if leaves := list(ret.get_leaves()):
+			return leaves[0] if len(leaves) == 1 else MultipleLeaf(leaves)
 		else:
-			return MultipleLeaf(leaves)
+			return
 
 
 def _save_result(cleaf):

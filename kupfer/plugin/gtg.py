@@ -47,9 +47,7 @@ def _create_dbus_connection(activate=False):
 
 
 def _truncate_long_text(text, maxlen=80):
-	if len(text) > maxlen:
-		return text[:maxlen - 1] + u'…'
-	return text
+	return f'{text[:maxlen - 1]}…' if len(text) > maxlen else text
 
 
 def _load_tasks(interface):

@@ -71,8 +71,7 @@ def _create_dbus_connection():
 	interface = None
 	sbus = dbus.SessionBus()
 	proxy_obj = sbus.get_object(ACCOUNTMANAGER_IFACE, ACCOUNTMANAGER_PATH)
-	dbus_iface = dbus.Interface(proxy_obj, DBUS_PROPS_IFACE)
-	return dbus_iface
+	return dbus.Interface(proxy_obj, DBUS_PROPS_IFACE)
 
 
 class EmpathyContact(JabberContact):
@@ -208,23 +207,22 @@ class ContactsSource(AppLeafContentMixin, ToplevelGroupingSource,
 			channels = connection.ListChannels()
 			for channel in channels:
 				contact_group = bus.get_object(connection_iface, channel[0])
-				contacts = contact_group.Get(CHANNEL_GROUP_IFACE, "Members")
-				if contacts:
-						contacts = [c for c in contacts]
-						contact_attributes = connection.Get(CONTACT_IFACE, "ContactAttributeInterfaces")
-						contact_attributes = [str(a) for a in contact_attributes]
-						contact_details = connection.GetContactAttributes(contacts, contact_attributes, False)
-						for contact, details in contact_details.iteritems():
-								status_code = details[_ATTRIBUTES.get("presence")][1]
-								if not show_offline and status_code == 'offline':
-									continue
-								yield EmpathyContact(
-										details[_ATTRIBUTES.get("jid")],
-										details[_ATTRIBUTES.get("alias")],
-										_STATUSES.get(status_code),
-										'', # empathy does not provide resource here AFAIK
-										valid_account,
-										contact)
+				if contacts := contact_group.Get(CHANNEL_GROUP_IFACE, "Members"):
+					contacts = list(contacts)
+					contact_attributes = connection.Get(CONTACT_IFACE, "ContactAttributeInterfaces")
+					contact_attributes = [str(a) for a in contact_attributes]
+					contact_details = connection.GetContactAttributes(contacts, contact_attributes, False)
+					for contact, details in contact_details.iteritems():
+							status_code = details[_ATTRIBUTES.get("presence")][1]
+							if not show_offline and status_code == 'offline':
+								continue
+							yield EmpathyContact(
+									details[_ATTRIBUTES.get("jid")],
+									details[_ATTRIBUTES.get("alias")],
+									_STATUSES.get(status_code),
+									'', # empathy does not provide resource here AFAIK
+									valid_account,
+									contact)
 
 	def get_icon_name(self):
 		return 'empathy'

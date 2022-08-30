@@ -84,7 +84,7 @@ class qfurl (object):
 		"""
 		scheme, mother, qfid, _ign, _ore, typname = _urlparse(url)
 		if scheme != QFURL_SCHEME:
-			raise QfurlError("Wrong scheme: %s" % scheme)
+			raise QfurlError(f"Wrong scheme: {scheme}")
 		qfid = qfid.lstrip("/")
 		return mother, qfid, typname
 
@@ -95,13 +95,13 @@ class qfurl (object):
 		mother, qfid, typname = self._parts_mother_id_typename(self.url)
 		module, name = typname.rsplit(".", 1) if typname else (None, None)
 		for src in catalog:
-			if name:
-				if name not in (pt.__name__
-						for pt in src.provides()) and \
-					name not in (t.__name__
-						for pt in src.provides()
-						for t in pt.__subclasses__()):
-					continue
+			if (
+				name
+				and name not in (pt.__name__ for pt in src.provides())
+				and name
+				not in (t.__name__ for pt in src.provides() for t in pt.__subclasses__())
+			):
+				continue
 			for obj in src.get_leaves():
 				if not hasattr(obj, "qf_id"):
 					continue

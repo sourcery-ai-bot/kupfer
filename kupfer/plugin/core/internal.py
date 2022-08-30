@@ -63,8 +63,7 @@ class CommandResults (Source):
 		return True
 	def get_items(self):
 		ctx = commandexec.DefaultActionExecutionContext()
-		for x in reversed(ctx.last_results):
-			yield x
+		yield from reversed(ctx.last_results)
 		try:
 			leaf = ctx.last_results[-1]
 		except IndexError:

@@ -143,15 +143,13 @@ def get_tracker_tags(for_file=None):
 	if not for_file:
 		for tagline in cmd_output_lines("tracker-tag --list")[1:]:
 			tag, count = tagline.rsplit(",", 1)
-			tag = tag.strip()
-			yield tag
+			yield tag.strip()
 	else:
 		output = cmd_output_lines("tracker-tag --list '%s'" % for_file)
 		for tagline in output[1:]:
 			fil, tagstr = tagline.rsplit(": ", 1)
 			tags = tagstr.strip().split("|")
-			for t in filter(None, tags):
-				yield t
+			yield from filter(None, tags)
 
 def get_tracker_tag_items(tag):
 	output = cmd_output_lines("tracker-tag -s '%s'" % tag)
@@ -224,7 +222,7 @@ class TrackerAddTag (Action):
 	def activate(self, leaf, obj):
 		lpath = leaf.object
 		tag = obj.object
-		utils.spawn_async(["tracker-tag", "--add=%s" % obj, lpath])
+		utils.spawn_async(["tracker-tag", f"--add={obj}", lpath])
 
 	def requires_object(self):
 		return True
@@ -240,10 +238,7 @@ class TrackerAddTag (Action):
 		return TrackerFileTagsSource()
 
 	def valid_object(self, obj, for_item):
-		if isinstance(obj, TextLeaf):
-			# FIXME: Do tag syntax checking here
-			return (u" " not in obj.object)
-		return True
+		return (u" " not in obj.object) if isinstance(obj, TextLeaf) else True
 
 	def get_description(self):
 		return _("Add tracker tag to file")
@@ -256,7 +251,7 @@ class TrackerRemoveTag (Action):
 	def activate(self, leaf, obj):
 		lpath = leaf.object
 		tag = obj.object
-		utils.spawn_async(["tracker-tag", "--remove=%s" % obj, lpath])
+		utils.spawn_async(["tracker-tag", f"--remove={obj}", lpath])
 
 	def requires_object(self):
 		return True

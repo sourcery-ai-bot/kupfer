@@ -66,12 +66,12 @@ class SendKeys (Action):
 		if mods != 0:
 			raise OperationError(_("Keys not yet implemented: %s") %
 					gtk.accelerator_get_label(keys, orig_mods))
-		key_arg = 'key %s' % (gtk.gdk.keyval_name(keys), )
-		mods_down = ['keydown ' + n for n in mod_names]
-		mods_up = ['keyup ' + n for n in reversed(mod_names)]
+		key_arg = f'key {gtk.gdk.keyval_name(keys)}'
+		mods_down = [f'keydown {n}' for n in mod_names]
+		mods_up = [f'keyup {n}' for n in reversed(mod_names)]
 
 		xte_paste_argv = ['xte', 'usleep 300000'] + \
-				mods_down + [key_arg] + mods_up
+					mods_down + [key_arg] + mods_up
 		if not utils.spawn_async(xte_paste_argv):
 			raise CommandMissingError('xte')
 	def item_types(self):

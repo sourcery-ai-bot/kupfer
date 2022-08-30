@@ -40,9 +40,7 @@ def toutf8(ustr):
 	This is to use the same error handling etc everywhere
 	if ustr is `str`, just return it
 	"""
-	if isinstance(ustr, str):
-		return ustr
-	return ustr.encode("UTF-8")
+	return ustr if isinstance(ustr, str) else ustr.encode("UTF-8")
 
 def fromlocale(lstr):
 	"""Return a unicode string from locale bytestring @lstr"""

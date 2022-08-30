@@ -16,11 +16,9 @@ def strbool(value, default=False):
 	if value in (True, False):
 		return value
 	value = str(value).lower()
-	if value in ("no", "false"):
+	if value in {"no", "false"}:
 		return False
-	if value in ("yes", "true"):
-		return True
-	return default
+	return True if value in {"yes", "true"} else default
 
 class SettingsController (gobject.GObject, pretty.OutputMixin):
 	__gtype_name__ = "SettingsController"
@@ -132,17 +130,17 @@ class SettingsController (gobject.GObject, pretty.OutputMixin):
 
 		def confmap_difference(config, defaults):
 			"""Extract the non-default keys to write out"""
-			difference = dict()
+			difference = {}
 			for secname, section in config.items():
 				if secname not in defaults:
 					difference[secname] = dict(section)
 					continue
 				difference[secname] = {}
 				for key, config_val in section.items():
-					if (secname in defaults and
-							key in defaults[secname]):
-						if defaults[secname][key] == config_val:
-							continue
+					if (secname in defaults and key in defaults[secname]) and defaults[
+						secname
+					][key] == config_val:
+						continue
 					difference[secname][key] = config_val
 				if not difference[secname]:
 					del difference[secname]
@@ -171,7 +169,7 @@ class SettingsController (gobject.GObject, pretty.OutputMixin):
 		value = self._config[section].get(key)
 		if section in self.defaults:
 			return value
-		raise KeyError("Invalid settings section: %s" % section)
+		raise KeyError(f"Invalid settings section: {section}")
 
 	def _set_config(self, section, key, value):
 		"""General interface, but section must exist"""
@@ -184,17 +182,16 @@ class SettingsController (gobject.GObject, pretty.OutputMixin):
 			self._emit_value_changed(section, key, value)
 			self._update_config_save_timer()
 			return True
-		raise KeyError("Invalid settings section: %s" % section)
+		raise KeyError(f"Invalid settings section: {section}")
 
 	def _emit_value_changed(self, section, key, value):
-		suffix = "%s.%s" % (section.lower(), key.lower())
-		self.emit("value-changed::"+suffix, section, key, value)
+		suffix = f"{section.lower()}.{key.lower()}"
+		self.emit(f"value-changed::{suffix}", section, key, value)
 
 	def _get_raw_config(self, section, key):
 		"""General interface, but section must exist"""
 		key = key.lower()
-		value = self._config[section].get(key)
-		return value
+		return self._config[section].get(key)
 
 	def _set_raw_config(self, section, key, value):
 		"""General interface, but will create section"""
@@ -237,18 +234,18 @@ class SettingsController (gobject.GObject, pretty.OutputMixin):
 				value_type=strbool, default=False)
 
 	@classmethod
-	def _source_config_repr(self, obj):
+	def _source_config_repr(cls, obj):
 		name = type(obj).__name__
 		return "".join([(c if c.isalnum() else '_') for c in name])
 
 	def get_source_is_toplevel(self, plugin_id, src):
-		key = "kupfer_toplevel_" + self._source_config_repr(src)
+		key = f"kupfer_toplevel_{self._source_config_repr(src)}"
 		default = not getattr(src, "source_prefer_sublevel", False)
 		return self.get_plugin_config(plugin_id, key,
 		                              value_type=strbool, default=default)
 
 	def set_source_is_toplevel(self, plugin_id, src, value):
-		key = "kupfer_toplevel_" + self._source_config_repr(src)
+		key = f"kupfer_toplevel_{self._source_config_repr(src)}"
 		self.emit("plugin-toplevel-changed", plugin_id, value)
 		return self.set_plugin_config(plugin_id, key,
 		                              value, value_type=strbool)
@@ -299,8 +296,10 @@ class SettingsController (gobject.GObject, pretty.OutputMixin):
 	def get_directories(self, direct=True):
 		"""Yield directories to use as directory sources"""
 
-		specialdirs = dict((k, getattr(glib, k))
-				for k in dir(glib) if k.startswith("USER_DIRECTORY_"))
+		specialdirs = {
+			k: getattr(glib, k) for k in dir(glib) if k.startswith("USER_DIRECTORY_")
+		}
+
 
 		def get_special_dir(opt):
 			if opt in specialdirs:
@@ -346,7 +345,7 @@ class SettingsController (gobject.GObject, pretty.OutputMixin):
 	def set_plugin_config(self, plugin, key, value, value_type=str):
 		"""Try set @key for plugin names @plugin, coerce to @value_type
 		first.  """
-		plug_section = "plugin_%s" % plugin
+		plug_section = f"plugin_{plugin}"
 		self._emit_value_changed(plug_section, key, value)
 
 		if hasattr(value_type, "save"):
@@ -414,7 +413,7 @@ class SettingsController (gobject.GObject, pretty.OutputMixin):
 	def _update_alternatives(self, category_key, alternatives, validator):
 		self._alternatives[category_key] = alternatives
 		self._alternative_validators[category_key] = validator
-		self.emit("alternatives-changed::"+category_key, category_key)
+		self.emit(f"alternatives-changed::{category_key}", category_key)
 
 
 # Arguments: Section, Key, Value
